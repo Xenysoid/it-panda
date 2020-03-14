@@ -1,13 +1,20 @@
-.nav{
+.nav {
     grid-area: n;
     background-color: darkslategrey;
     border-radius: 5px;
-    padding: 10px;
-   }
+    padding: 15px 30px 5px 5px;
+}
 
-   .item {
-       color: floralwhite;
-   }
-   .item.active {
-       color: gold;
-   }
+.item {
+    margin-bottom: 5px;
+}
+
+.item a {
+    color: floralwhite;
+    text-decoration: none;
+
+}
+
+.item a.active {
+    color: coral;
+}
