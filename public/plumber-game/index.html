@@ -132,7 +132,8 @@ for (const k of Object.keys(DEFAULTS)) CONFIG[k] = qs.get(k) || DEFAULTS[k];
 // ============================================================
 //  Константы
 // ============================================================
-const T = 32, VW = 960, VH = 544, ROWS = 17;
+const T = 32, VH = 544, ROWS = 17;
+let VW = 960; // ширина подстраивается под пропорции экрана (на вытянутых телефонах шире), см. resize()
 const GRAV = 0.55, MAXFALL = 12;
 const canvas = document.getElementById('c');
 const ctx = canvas.getContext('2d');
@@ -142,11 +143,21 @@ const isTouch = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0) || 
 
 function store(k, v) { try { if (v === undefined) return localStorage.getItem(k); localStorage.setItem(k, v); } catch (e) { return null; } }
 
+// RS — плотность пикселей канваса (чёткость на ретина-экранах), ZOOM — приближение мира на маленьких экранах,
+// HZ — масштаб интерфейса (HUD); HW×HH — размеры HUD в его собственных координатах.
+let RS = 1, ZOOM = 1, HZ = 1, HW = VW, HH = VH;
 function resize() {
-  const touchPad = isTouch ? 0 : 0;
-  const s = Math.min(innerWidth / VW, (innerHeight - touchPad) / VH);
+  // на вытянутых экранах расширяем поле зрения, чтобы не было чёрных полос по бокам
+  VW = Math.round(Math.max(960, Math.min(1280, VH * innerWidth / Math.max(1, innerHeight))));
+  const s = Math.min(innerWidth / VW, innerHeight / VH);
   stage.style.width = Math.floor(VW * s) + 'px';
   stage.style.height = Math.floor(VH * s) + 'px';
+  const cssTile = T * s;                       // размер клетки в CSS-пикселях
+  ZOOM = cssTile >= 28 ? 1 : Math.max(1, Math.min(1.8, 34 / cssTile));
+  HZ = Math.min(ZOOM, 1.55); HW = VW / HZ; HH = VH / HZ;
+  RS = Math.max(1, Math.min(2.5, s * (window.devicePixelRatio || 1)));
+  const cw = Math.round(VW * RS), ch = Math.round(VH * RS);
+  if (canvas.width !== cw || canvas.height !== ch) { canvas.width = cw; canvas.height = ch; }
 }
 addEventListener('resize', resize); resize();
 
@@ -221,12 +232,13 @@ document.querySelectorAll('#touch .tb').forEach(el => {
   el.addEventListener('pointercancel', off); el.addEventListener('lostpointercapture', off);
 });
 // Кнопки звука и паузы нарисованы в HUD (правый верхний угол канваса)
-const HUD_BTNS = { mute: { x: VW - 76, y: 5, w: 32, h: 30 }, pause: { x: VW - 38, y: 5, w: 32, h: 30 }, fs: { x: VW - 114, y: 5, w: 32, h: 30 } };
-const HUD_RIGHT = fsSupported ? VW - 126 : VW - 88;
+function hudBtns() { return { mute: { x: HW - 76, y: 5, w: 32, h: 30 }, pause: { x: HW - 38, y: 5, w: 32, h: 30 }, fs: { x: HW - 114, y: 5, w: 32, h: 30 } }; }
+function hudRight() { return fsSupported ? HW - 126 : HW - 88; }
 canvas.addEventListener('pointerdown', e => {
   ensureAudio();
   const r = canvas.getBoundingClientRect();
-  const x = (e.clientX - r.left) / r.width * VW, y = (e.clientY - r.top) / r.height * VH;
+  const x = (e.clientX - r.left) / r.width * VW / HZ, y = (e.clientY - r.top) / r.height * VH / HZ;
+  const HUD_BTNS = hudBtns();
   const inB = b => x >= b.x - 6 && x <= b.x + b.w + 6 && y >= b.y - 6 && y <= b.y + b.h + 6;
   if (inB(HUD_BTNS.mute)) { toggleMute(); return; }
   if (fsSupported && inB(HUD_BTNS.fs)) { toggleFs(); return; }
@@ -669,7 +681,7 @@ function makeEnemy(c, tx, ty) {
 // ============================================================
 const G = {
   state: 'title', levelIdx: 0, score: 0, nuts: 0, lives: 3, power: false,
-  lvl: null, P: null, cam: { x: 0 }, cp: null, time: 0, timeFrac: 0, frame: 0,
+  lvl: null, P: null, cam: { x: 0, y: 0 }, cp: null, time: 0, timeFrac: 0, frame: 0,
   stateT: 0, parts: [], pops: [], items: [], jets: [], bshots: [], waves: [], hi: +(store('vz_hi') || 0), swingId: 0, shake: 0,
 };
 
@@ -690,7 +702,8 @@ function loadLevel(idx, fromCheckpoint) {
   G.P = newPlayer(sx, sy);
   G.time = L.def.time; G.timeFrac = 0;
   G.parts = []; G.pops = []; G.items = []; G.jets = []; G.bshots = []; G.waves = [];
-  G.cam.x = clamp(sx - VW * 0.4, 0, L.w * T - VW);
+  G.cam.x = clamp(sx - VW / ZOOM * 0.4, 0, L.w * T - VW / ZOOM);
+  G.cam.y = clamp(sy - VH / ZOOM * 0.6, 0, VH - VH / ZOOM);
 }
 
 function startGame() {
@@ -826,7 +839,8 @@ function update() {
   if (pressed.mute) toggleMute();
   switch (G.state) {
     case 'title':
-      G.cam.x += 1.2; if (G.lvl && G.cam.x > G.lvl.w * T - VW) G.cam.x = 0;
+      G.cam.x += 1.2; if (G.lvl && G.cam.x > G.lvl.w * T - VW / ZOOM) G.cam.x = 0;
+      G.cam.y = VH - VH / ZOOM;
       updatePlatforms();
       if (pressed.start || pressed.jump || pressed.act) startGame();
       break;
@@ -981,8 +995,11 @@ function updatePlay() {
   }
 
   // камера
-  const target = clamp(P.x + P.w / 2 - VW * 0.42, 0, L.w * T - VW);
+  const vw = VW / ZOOM, vh = VH / ZOOM;
+  const target = clamp(P.x + P.w / 2 - vw * 0.42, 0, L.w * T - vw);
   G.cam.x += (target - G.cam.x) * 0.14;
+  const ty = clamp(P.y + P.h / 2 - vh * 0.6, 0, VH - vh);
+  G.cam.y += (ty - (G.cam.y || 0)) * 0.12;
 }
 
 // ============================================================
@@ -1415,18 +1432,25 @@ function text(s, x, y, size, color = '#fff', align = 'left', outline = true, wei
 
 function render() {
   const L = G.lvl;
+  ctx.setTransform(RS, 0, 0, RS, 0, 0);
+  ctx.imageSmoothingEnabled = true;
   ctx.save();
   if (G.shake > 0) ctx.translate((Math.random() - 0.5) * G.shake, (Math.random() - 0.5) * G.shake);
   if (L) {
+    ctx.save(); ctx.scale(ZOOM, ZOOM);
     drawBackground(L.theme, G.cam.x);
+    ctx.translate(0, -Math.round(G.cam.y || 0));
     drawWorld(L);
+    ctx.restore();
   } else R(0, 0, VW, VH, '#000');
   ctx.restore();
 
-  if (G.state === 'title') { drawTitle(); return; }
+  if (G.state === 'title') { drawTitle(); ctx.save(); ctx.scale(HZ, HZ); drawHudButtons(); ctx.restore(); return; }
+  ctx.save(); ctx.scale(HZ, HZ);
   drawHUD();
   if (G.state === 'intro') drawIntro();
   if (G.state === 'clear') drawClear();
+  ctx.restore();
 }
 
 function drawBackground(th, camx) {
@@ -2065,7 +2089,7 @@ function drawHero(P, camx) {
 }
 
 function drawHUD() {
-  R(0, 0, VW, 40, 'rgba(0,0,0,.45)');
+  R(0, 0, HW, 40, 'rgba(0,0,0,.45)');
   for (let i = 0; i < 3; i++) drawHeart(22 + i * 26, 20, 9, i < (G.P ? G.P.hp : 0) ? '#ff4d6d' : 'rgba(255,255,255,.2)');
   text('×' + G.lives, 100, 20, 18, '#fff');
   // мини-вантузыч
@@ -2074,21 +2098,21 @@ function drawHUD() {
   text('СЧЁТ ' + String(G.score).padStart(6, '0'), 250, 20, 18, '#fff');
   if (G.power) { drawGunItem(415, 8); text('ВОДА', 445, 20, 14, '#7fd4ff'); }
   const L = G.lvl;
-  text(`${G.levelIdx + 1}. ${L.def.name}`, HUD_RIGHT - 92, 20, 16, '#f5c518', 'right');
-  text('⏱ ' + G.time, HUD_RIGHT, 20, 18, G.time < 40 && G.frame % 30 < 15 ? '#ff4d4d' : '#fff', 'right');
+  if (HW >= 800) text(`${G.levelIdx + 1}. ${L.def.name}`, hudRight() - 92, 20, 16, '#f5c518', 'right');
+  text('⏱ ' + G.time, hudRight(), 20, 18, G.time < 40 && G.frame % 30 < 15 ? '#ff4d4d' : '#fff', 'right');
   drawHudButtons();
   // полоска здоровья босса
   const B = L.boss;
   if (B && B.awake && !B.dead) {
-    const w = 340, x = VW / 2 - w / 2, y = 52, k = B.hp / B.max;
+    const w = 340, x = HW / 2 - w / 2, y = 52, k = B.hp / B.max;
     R(x - 2, y - 2, w + 4, 16, '#000'); R(x, y, w, 12, '#3a1a10');
     R(x, y, w * k, 12, k <= 0.5 ? (G.frame % 20 < 10 ? '#ff3a1a' : '#c0281a') : '#c0281a'); R(x, y, w * k, 3, 'rgba(255,255,255,.25)');
-    text(B.name.toUpperCase(), VW / 2, y + 26, 15, '#ffb08a', 'center');
+    text(B.name.toUpperCase(), HW / 2, y + 26, 15, '#ffb08a', 'center');
   }
 }
 
 function drawHudButtons() {
-  const m = HUD_BTNS.mute, p = HUD_BTNS.pause, f = HUD_BTNS.fs;
+  const HUD_BTNS = hudBtns(), m = HUD_BTNS.mute, p = HUD_BTNS.pause, f = HUD_BTNS.fs;
   if (fsSupported) {
     R(f.x, f.y, f.w, f.h, 'rgba(255,255,255,.12)'); R(f.x, f.y, f.w, 1, 'rgba(255,255,255,.3)');
     const o = isFs() ? 1 : 0, x1 = f.x + 8, y1 = f.y + 7, x2 = f.x + 24, y2 = f.y + 23;
@@ -2113,17 +2137,17 @@ function drawHudButtons() {
 
 function drawIntro() {
   const a = Math.min(1, G.stateT / 10) * (G.stateT > 95 ? Math.max(0, (110 - G.stateT) / 15) : 1);
-  ctx.globalAlpha = a * 0.75; R(0, 0, VW, VH, '#05090e'); ctx.globalAlpha = a;
-  text('УРОВЕНЬ ' + (G.levelIdx + 1) + ' ИЗ ' + LEVELS.length, VW / 2, VH / 2 - 50, 26, '#9fb0bf', 'center');
-  text(G.lvl.def.name, VW / 2, VH / 2 - 8, 44, '#f5c518', 'center');
-  text('Жизни: ' + G.lives + '   ·   Победи босса «' + BOSSES[G.lvl.def.boss].name + '» и уйди в слив!', VW / 2, VH / 2 + 44, 18, '#fff', 'center');
+  ctx.globalAlpha = a * 0.75; R(0, 0, HW, HH, '#05090e'); ctx.globalAlpha = a;
+  text('УРОВЕНЬ ' + (G.levelIdx + 1) + ' ИЗ ' + LEVELS.length, HW / 2, HH / 2 - 50, 26, '#9fb0bf', 'center');
+  text(G.lvl.def.name, HW / 2, HH / 2 - 8, 44, '#f5c518', 'center');
+  text('Жизни: ' + G.lives + '   ·   Победи босса «' + BOSSES[G.lvl.def.boss].name + '» и уйди в слив!', HW / 2, HH / 2 + 44, 18, '#fff', 'center');
   ctx.globalAlpha = 1;
 }
 
 function drawClear() {
-  ctx.globalAlpha = 0.6; R(0, VH / 2 - 80, VW, 160, '#05090e'); ctx.globalAlpha = 1;
-  text('ТРУБА ПРОЧИЩЕНА!', VW / 2, VH / 2 - 30, 40, '#7fd4ff', 'center');
-  text('Бонус за время: ' + (G.clearBonus * 10) + '   ·   Счёт: ' + G.score, VW / 2, VH / 2 + 24, 20, '#fff', 'center');
+  ctx.globalAlpha = 0.6; R(0, HH / 2 - 80, HW, 160, '#05090e'); ctx.globalAlpha = 1;
+  text('ТРУБА ПРОЧИЩЕНА!', HW / 2, HH / 2 - 30, 40, '#7fd4ff', 'center');
+  text('Бонус за время: ' + (G.clearBonus * 10) + '   ·   Счёт: ' + G.score, HW / 2, HH / 2 + 24, 20, '#fff', 'center');
 }
 
 function drawTitle() {
@@ -2147,7 +2171,6 @@ function drawTitle() {
     text('🏆 Лучшие мастера:  ' + line, VW / 2, 470, 16, '#7CFC9A', 'center');
   } else if (G.hi > 0) text('Ваш рекорд: ' + G.hi, VW / 2, 470, 16, '#7CFC9A', 'center');
   text(CONFIG.company + ' · ' + CONFIG.phone, VW / 2, VH - 22, 15, '#9fb0bf', 'center');
-  drawHudButtons();
 }
 
 // ============================================================
