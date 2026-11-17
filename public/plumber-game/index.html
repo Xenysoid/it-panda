@@ -1065,7 +1065,7 @@ function updateBoss() {
         B.st = 'stun'; B.t = 75; B.vx = 0;
       } break;
     case 'stun': B.vx = 0; if (B.t <= 0) bossNext(B); break;
-    case 'hurt': B.vx = 0; if (B.t <= 0) bossNext(B); break;
+    case 'hurt': B.vx = 0; if (B.t <= 0) { B.st = 'walk'; bossNext(B); } break; // после заминки — сразу контратака
     case 'summonPrep': B.vx = 0; faceP(); B.mouth = 2; if (B.t <= 0) {
       for (let i = 0; i < 2; i++) {
         const e = makeEnemy(Math.random() < 0.5 ? 'r' : 'k', 0, 0);
@@ -1105,7 +1105,7 @@ function hitBoss(B, dir) {
   if (!B.awake) { B.awake = true; B.st = 'roar'; B.t = 40; for (let y = 0; y <= 13; y++) setTile(B.gateL, y, 'Q'); }
   B.hp--; B.inv = 22; B.flash = 10;
   // отскок и короткая заминка, чтобы игрок успел отойти
-  if (B.st !== 'jumpAir' && B.st !== 'charge') { B.recoil = dir * 5; if (B.st === 'walk') { B.st = 'hurt'; B.t = 22; } }
+  if (B.st !== 'jumpAir' && B.st !== 'charge') { B.recoil = dir * 5; if (B.st === 'walk') { B.st = 'hurt'; B.t = 16; } }
   particles(B.x + B.w / 2, B.y + B.h / 2, 12, [B.c.body, B.c.hi, B.c.dark], 4, 0.3, 5, 40);
   SFX.bossHit(); G.shake = 6;
   if (B.hp === Math.floor(B.max / 2)) popText(B.x + B.w / 2, B.y - 20, 'ОН В ЯРОСТИ!', '#ff5a3a');
