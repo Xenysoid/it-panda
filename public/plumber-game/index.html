@@ -373,7 +373,7 @@ const SFX = {
 // ============================================================
 // Тайлы: '#' стена/пол, '[' ']' верх трубы, '(' ')' тело трубы, '=' горизонтальная труба,
 // '-' решётка (можно запрыгнуть снизу), 'C' засор, 'Q' решётка арены босса,
-// 'B' ящик с гайкой, 'P' ящик с гидромашиной, 'L' ящик с сердцем, 'b' пустой ящик, '~' сточная жижа.
+// '^' мусор-шипы (зубочистки, ватные палочки, кости), 'B' ящик с гайкой, 'P' ящик с гидромашиной, 'L' ящик с сердцем, 'b' пустой ящик, '~' сточная жижа.
 // Сущности: 'S' старт, 'o' гайка, 'r' крыса, 'g' жирок, 'k' таракан, 'h' волосяной ком,
 // 'd' капающая труба, 'F' вентиль-чекпоинт, 'E' слив (финиш). b.boss(x1, x2) — арена босса.
 const LEVELS = [
@@ -385,26 +385,26 @@ const LEVELS = [
       b.row(8, 11, 11, 'o');
       b.set(13, 10, 'B'); b.set(15, 10, 'P'); b.set(17, 10, 'B');
       b.sign(14, 'Бей ящики головой снизу', 'Бей ящики головой снизу', 13);
-      b.set(21, 13, 'g');
+      b.set(21, 13, 'g'); b.spikes(19, 20);
       b.sign(24, 'X — удар вантузом!', 'Кнопка ВАНТУЗ — удар!');
       b.col(28, 0, 10, '#'); b.col(28, 11, 13, 'C');
       b.pipe(32, 12); b.set(36, 13, 'g'); b.pipe(40, 11); b.row(40, 41, 10, 'o');
       b.g(48, 70);
       b.row(51, 55, 10, '-'); b.row(51, 55, 9, 'o');
-      b.set(59, 13, 'r');
+      b.set(59, 13, 'r'); b.spikes(56, 57);
       b.set(63, 10, 'B'); b.set(64, 10, 'C'); b.set(65, 10, 'B'); b.loot(64, 10, 'rapid');
       b.row(67, 70, 7, '='); b.row(67, 70, 6, 'o');
       b.g(74, 102);
       b.set(77, 13, 'F'); b.sign(75, 'Вентиль — точка сохранения', 'Вентиль — точка сохранения', 13);
       b.set(82, 13, 'g');
       b.row(86, 89, 14, '~'); b.row(86, 89, 10, 'o');
-      b.set(94, 13, 'k'); b.pipe(98, 11);
+      b.set(94, 13, 'k'); b.pipe(98, 11); b.spikes(91, 92);
       b.g(106, 112);
       b.set(109, 13, '#'); b.col(110, 12, 13, '#'); b.col(111, 11, 13, '#'); b.col(112, 10, 13, '#');
       b.row(113, 116, 7, 'o');
       b.g(117, 140);
       b.col(125, 0, 10, '#'); b.col(125, 11, 13, 'C'); b.loot(125, 13, 'triple');
-      b.set(129, 13, 'h'); b.set(133, 10, 'L');
+      b.set(129, 13, 'h'); b.set(133, 10, 'L'); b.spikes(121, 122); b.spikes(136, 137);
       b.g(141, 185);
       b.set(142, 13, 'r'); b.set(143, 13, 'F');
       b.sign(146, 'Босс! Бей вантузом, прыгай сверху', 'Босс! Бей вантузом, прыгай сверху');
@@ -420,20 +420,20 @@ const LEVELS = [
       b.sign(6, 'Волосяные комья прыгают!', 'Волосяные комья прыгают!');
       b.row(9, 12, 11, 'o');
       b.set(14, 10, 'B'); b.set(15, 10, 'C'); b.set(16, 10, 'P'); b.set(17, 10, 'C'); b.set(18, 10, 'B'); b.loot(17, 10, 'rapid');
-      b.set(22, 13, 'h');
+      b.set(24, 13, 'h'); b.spikes(20, 21);
       b.pipe(26, 12); b.set(30, 13, 'k'); b.pipe(34, 11); b.row(34, 35, 10, 'o');
       b.g(41, 75); b.row(43, 52, 14, '~');
       b.row(44, 46, 11, '-'); b.row(49, 51, 10, '-'); b.row(44, 46, 10, 'o'); b.row(49, 51, 9, 'o');
-      b.set(56, 13, 'h'); b.set(60, 13, 'g');
+      b.set(56, 13, 'h'); b.set(60, 13, 'g'); b.spikes(54, 55);
       b.col(64, 0, 10, '#'); b.col(64, 11, 13, 'C');
       b.set(68, 13, 'r'); b.row(70, 73, 10, 'o');
       b.g(79, 110);
       b.set(81, 13, 'F');
       b.set(86, 13, '#'); b.col(87, 12, 13, '#'); b.col(88, 11, 13, '#');
       b.row(90, 95, 8, '='); b.row(90, 95, 7, 'o');
-      b.set(99, 13, 'h'); b.set(104, 13, 'k'); b.pipe(107, 11);
+      b.set(99, 13, 'h'); b.set(104, 13, 'k'); b.pipe(107, 11); b.spikes(96, 97);
       b.g(114, 150); b.row(118, 124, 14, '~'); b.plat(118, 12, 'h', 3); b.row(119, 123, 9, 'o');
-      b.set(128, 13, 'h'); b.set(131, 13, 'h');
+      b.set(128, 13, 'h'); b.set(131, 13, 'h'); b.spikes(126, 127);
       b.set(134, 10, 'B'); b.set(135, 10, 'L'); b.set(136, 10, 'B');
       b.fill(140, 0, 141, 10, '#'); b.fill(140, 11, 141, 13, 'C'); b.loot(140, 13, 'triple');
       b.set(145, 13, 'k');
@@ -453,26 +453,26 @@ const LEVELS = [
       b.row(7, 10, 11, 'o');
       b.fill(12, 0, 30, 2, '#'); b.set(15, 3, 'd'); b.set(24, 3, 'd');
       b.set(18, 10, 'B'); b.set(19, 10, 'P'); b.set(20, 10, 'B');
-      b.set(26, 13, 'r');
+      b.set(26, 13, 'r'); b.spikes(22, 23);
       b.g(31, 60); b.row(31, 40, 14, '~'); b.plat(31, 12, 'h', 5); b.row(33, 37, 9, 'o');
-      b.set(45, 13, 'g'); b.set(48, 13, 'g');
+      b.set(45, 13, 'g'); b.set(48, 13, 'g'); b.spikes(50, 51);
       b.pipe(52, 11); b.set(55, 13, 'k'); b.pipe(58, 11);
       b.g(65, 95);
       b.set(67, 13, 'F');
       b.fill(72, 0, 73, 10, '#'); b.fill(72, 11, 73, 13, 'C'); b.loot(72, 13, 'triple');
       b.fill(76, 0, 95, 1, '#'); b.set(80, 2, 'd'); b.set(92, 2, 'd');
       b.row(78, 81, 11, '-'); b.row(83, 86, 8, '-'); b.row(83, 86, 7, 'o'); b.set(85, 4, 'L');
-      b.set(90, 13, 'h');
+      b.set(90, 13, 'h'); b.spikes(87, 88);
       b.g(96, 140); b.row(98, 122, 14, '~');
       b.plat(98, 12, 'h', 3); b.row(99, 102, 9, 'o');
       b.fill(107, 12, 109, 14, '#'); b.set(108, 11, 'k');
       b.plat(111, 12, 'h', 5); b.row(112, 117, 9, 'o');
-      b.set(130, 13, 'r'); b.set(134, 13, 'r'); b.pipe(137, 11);
+      b.set(130, 13, 'r'); b.set(134, 13, 'r'); b.pipe(137, 11); b.spikes(127, 128);
       b.g(144, 205);
       b.set(147, 13, 'F');
       b.fill(146, 0, 168, 1, '#'); b.set(155, 2, 'd'); b.set(163, 2, 'd');
       b.set(150, 10, 'B'); b.set(151, 10, 'C'); b.set(152, 10, 'B'); b.set(153, 10, 'C'); b.loot(153, 10, 'rapid');
-      b.set(158, 13, 'g'); b.set(164, 13, 'h');
+      b.set(158, 13, 'g'); b.set(164, 13, 'h'); b.spikes(160, 161);
       b.set(166, 13, 'F'); b.set(172, 10, 'L');
       b.sign(171, 'Ржавая пробка таранит!', 'Ржавая пробка таранит!');
       b.boss(177, 195);
@@ -486,11 +486,11 @@ const LEVELS = [
       b.g(0, 26); b.set(3, 13, 'S');
       b.sign(5, 'Ливнёвка: смотри под ноги!', 'Ливнёвка: смотри под ноги!');
       b.set(9, 10, 'B'); b.set(10, 10, 'P'); b.set(11, 10, 'B'); b.row(14, 17, 11, 'o');
-      b.set(20, 13, 'r'); b.set(24, 13, 'k');
+      b.set(20, 13, 'r'); b.set(24, 13, 'k'); b.spikes(15, 16);
       b.g(30, 34); b.pipe(31, 12);
       b.g(38, 64);
       b.row(42, 46, 10, '-'); b.row(42, 46, 9, 'o');
-      b.set(48, 13, 'g'); b.set(52, 13, 'r');
+      b.set(48, 13, 'g'); b.set(52, 13, 'r'); b.spikes(49, 50);
       b.col(57, 0, 10, '#'); b.col(57, 11, 13, 'C'); b.loot(57, 13, 'rapid');
       b.set(61, 13, 'h');
       b.g(65, 120); b.row(66, 90, 14, '~');
@@ -500,13 +500,13 @@ const LEVELS = [
       b.row(83, 86, 8, '='); b.row(83, 86, 7, 'o');
       b.set(93, 13, 'F');
       b.fill(96, 0, 120, 1, '#'); b.set(100, 2, 'd'); b.set(108, 2, 'd'); b.set(116, 2, 'd');
-      b.set(99, 13, 'g'); b.set(104, 13, 'h');
+      b.set(99, 13, 'g'); b.set(104, 13, 'h'); b.spikes(102, 103);
       b.set(110, 10, 'B'); b.set(111, 10, 'L'); b.set(112, 10, 'B');
       b.set(116, 13, 'r');
       b.g(124, 160);
       b.pipe(127, 12); b.pipe(131, 11); b.pipe(135, 10);
       b.row(138, 142, 8, '='); b.row(138, 142, 7, 'o');
-      b.set(145, 13, 'k'); b.set(149, 13, 'r');
+      b.set(147, 13, 'k'); b.set(150, 13, 'r'); b.spikes(143, 144);
       b.fill(154, 0, 155, 10, '#'); b.fill(154, 11, 155, 13, 'C'); b.loot(154, 13, 'triple');
       b.g(161, 209);
       b.set(159, 13, 'F'); b.set(162, 10, 'L');
@@ -522,26 +522,26 @@ const LEVELS = [
       b.g(0, 22); b.set(3, 13, 'S');
       b.sign(5, 'Септик. Здесь живут крысы…', 'Септик. Здесь живут крысы…');
       b.set(8, 10, 'B'); b.set(9, 10, 'P'); b.set(10, 10, 'B');
-      b.set(15, 13, 'r'); b.set(19, 13, 'r');
+      b.set(15, 13, 'r'); b.set(19, 13, 'r'); b.spikes(12, 13);
       b.g(23, 50); b.row(25, 34, 14, '~');
       b.row(26, 28, 11, '-'); b.row(31, 33, 11, '-'); b.row(26, 28, 10, 'o'); b.row(31, 33, 10, 'o');
-      b.set(38, 13, 'g'); b.set(41, 13, 'k'); b.pipe(45, 11);
+      b.set(38, 13, 'g'); b.set(41, 13, 'k'); b.pipe(45, 11); b.spikes(36, 37);
       b.g(54, 90);
       b.set(56, 13, 'F');
       b.fill(60, 0, 61, 10, '#'); b.fill(60, 11, 61, 13, 'C'); b.loot(60, 13, 'rapid'); b.loot(61, 13, 'triple');
       b.fill(64, 0, 88, 1, '#'); b.set(68, 2, 'd'); b.set(76, 2, 'd'); b.set(84, 2, 'd');
       b.set(66, 13, 'h'); b.set(70, 13, 'r'); b.set(73, 13, 'r');
       b.row(74, 78, 10, '-'); b.row(74, 78, 9, 'o');
-      b.set(80, 13, 'g'); b.set(85, 13, 'k');
+      b.set(80, 13, 'g'); b.set(85, 13, 'k'); b.spikes(82, 83);
       b.g(91, 135); b.row(92, 118, 14, '~');
       b.plat(92, 12, 'h', 4); b.row(93, 97, 9, 'o');
       b.fill(101, 12, 102, 14, '#');
       b.plat(104, 11, 'h', 4); b.row(105, 109, 8, 'o');
       b.fill(113, 11, 114, 14, '#');
-      b.set(122, 13, 'h'); b.set(126, 13, 'r'); b.set(129, 10, 'L'); b.pipe(132, 11);
+      b.set(122, 13, 'h'); b.set(126, 13, 'r'); b.set(129, 10, 'L'); b.pipe(132, 11); b.spikes(124, 125);
       b.g(139, 193);
       b.set(141, 13, 'F');
-      b.set(145, 13, 'k'); b.set(148, 13, 'g');
+      b.set(145, 13, 'k'); b.set(148, 13, 'g'); b.spikes(143, 144);
       b.sign(150, 'Король септика! Зовёт крыс', 'Король септика! Зовёт крыс');
       b.boss(155, 176);
       b.set(183, 13, 'E');
@@ -554,21 +554,21 @@ const LEVELS = [
       b.g(0, 24); b.set(3, 13, 'S');
       b.sign(5, 'Финал! Главный засор города', 'Финал! Главный засор города');
       b.set(10, 10, 'B'); b.set(11, 10, 'P'); b.set(12, 10, 'L');
-      b.set(16, 13, 'r'); b.set(21, 13, 'k');
+      b.set(16, 13, 'r'); b.set(21, 13, 'k'); b.spikes(14, 15);
       b.g(25, 44); b.row(25, 44, 14, '~');
       b.row(26, 29, 12, '-'); b.plat(31, 12, 'h', 4); b.row(31, 37, 9, 'o');
       b.row(39, 44, 11, '-'); b.set(42, 10, 'r');
       b.g(45, 70);
       b.set(47, 13, 'F');
       b.col(52, 0, 10, '#'); b.col(52, 11, 13, 'C'); b.loot(52, 13, 'rapid');
-      b.set(56, 13, 'h'); b.set(60, 13, 'h');
+      b.set(56, 13, 'h'); b.set(60, 13, 'h'); b.spikes(58, 59);
       b.pipe(63, 11); b.set(66, 13, 'g'); b.pipe(68, 11);
       b.g(71, 130); b.row(74, 97, 14, '~');
       b.fill(72, 0, 100, 1, '#'); b.set(77, 2, 'd'); b.set(86, 2, 'd'); b.set(94, 2, 'd');
       b.row(75, 78, 11, '='); b.plat(80, 12, 'v', 4);
       b.row(83, 87, 8, '='); b.row(83, 87, 7, 'o');
       b.plat(89, 11, 'h', 4);
-      b.set(104, 13, 'r'); b.set(108, 13, 'k'); b.set(111, 13, 'k');
+      b.set(104, 13, 'r'); b.set(108, 13, 'k'); b.set(111, 13, 'k'); b.spikes(100, 101); b.spikes(117, 118);
       b.set(113, 10, 'B'); b.set(114, 10, 'B'); b.set(115, 10, 'B');
       b.fill(120, 0, 121, 10, '#'); b.fill(120, 11, 121, 13, 'C'); b.loot(120, 13, 'triple');
       b.set(125, 13, 'g');
@@ -576,12 +576,12 @@ const LEVELS = [
       b.g(142, 165);
       b.set(144, 13, 'F');
       b.row(148, 152, 10, '-'); b.row(148, 152, 9, 'o');
-      b.set(150, 13, 'h'); b.set(155, 13, 'r'); b.set(159, 13, 'g');
+      b.set(150, 13, 'h'); b.set(155, 13, 'r'); b.set(159, 13, 'g'); b.spikes(162, 163);
       b.g(166, 235); b.row(167, 182, 14, '~');
       b.plat(168, 12, 'h', 4); b.row(177, 179, 11, '='); b.row(177, 179, 10, 'o');
       b.set(187, 13, 'F');
       b.fill(186, 0, 197, 1, '#'); b.set(192, 2, 'd');
-      b.set(190, 13, 'k'); b.set(196, 10, 'L');
+      b.set(190, 13, 'k'); b.set(196, 10, 'L'); b.spikes(193, 194);
       b.sign(197, 'ГЛАВНЫЙ ЗАСОР ГОРОДА', 'ГЛАВНЫЙ ЗАСОР ГОРОДА');
       b.boss(202, 224);
       b.set(229, 13, 'E');
@@ -643,6 +643,7 @@ function buildLevel(idx) {
     g(x1, x2, top = 14) { b.fill(x1, top, x2, H - 1, '#'); },
     pipe(x, top, bot = 13) { b.set(x, top, '['); b.set(x + 1, top, ']'); for (let y = top + 1; y <= bot; y++) { b.set(x, y, '('); b.set(x + 1, y, ')'); } },
     plat(x, y, axis = 'h', range = 4) { plats.push({ sx: x * T, sy: y * T, axis, range: range * T, w: 96, h: 12, x: x * T, y: y * T, dx: 0, dy: 0 }); },
+    spikes(x1, x2, y = 13) { for (let x = x1; x <= x2; x++) b.set(x, y, '^'); },
     loot(x, y, type) { loot.set(x + ',' + y, type); },
     sign(x, kb, touch, y = 13) { signs.push({ x: x * T + 16, y: (y + 1) * T, text: isTouch ? touch : kb }); },
   };
@@ -970,6 +971,16 @@ function updatePlay() {
     }
   }
 
+  // мусор-шипы: зубочистки, ватные палочки, кости
+  {
+    const lx = Math.floor((P.x + 3) / T), rx = Math.floor((P.x + P.w - 3) / T);
+    const ty1 = Math.floor(P.y / T), ty2 = Math.floor((P.y + P.h - 1) / T);
+    for (let ty = ty1; ty <= ty2; ty++) for (let tx = lx; tx <= rx; tx++)
+      if (tileAt(tx, ty) === '^' && P.x + P.w > tx * T + 4 && P.x < tx * T + T - 4 && P.y + P.h > ty * T + 17) {
+        if (P.inv <= 0) { hurtPlayer(P.x + P.w / 2 - P.face * 10); if (!P.dead) { P.vy = -9; P.y = Math.min(P.y, ty * T + 16 - P.h); } }
+      }
+  }
+
   // гайки
   for (const n of L.nuts) if (!n.taken && Math.abs(n.x - (P.x + P.w / 2)) < 20 && Math.abs(n.y - (P.y + P.h / 2)) < 24) {
     n.taken = true; addNut(n.x, n.y);
@@ -1242,6 +1253,7 @@ function updateEnemies() {
       const c = tileAt(Math.floor(fx / T), Math.floor((e.y + e.h + 4) / T));
       if (!solid(c) && c !== '-') e.vx = -e.vx;
     }
+    if (e.onGround && tileAt(Math.floor((e.vx > 0 ? e.x + e.w + 2 : e.x - 2) / T), Math.floor((e.y + e.h - 2) / T)) === '^') e.vx = -e.vx;
     const vx = e.vx;
     moveBody(e);
     if (e.hitWall) e.vx = -vx;
@@ -1686,6 +1698,7 @@ function drawTile(c, x, y, tx, ty, th, bump) {
       break;
     }
     case 'C': drawClog(x, y, tx, ty, bump); break;
+    case '^': drawSpikes(x, y, tx, ty, th); break;
     case 'Q': {
       R(x + 2, y, T - 4, T, 'rgba(10,14,18,.35)');
       for (let i = 0; i < 3; i++) { R(x + 4 + i * 10, y, 5, T, '#4b555e'); R(x + 4 + i * 10, y, 2, T, '#8a96a1'); }
@@ -1729,6 +1742,36 @@ function pipeGrad(px0, pw, th) {
   g.addColorStop(0, th.pipeLo); g.addColorStop(0.1, th.pipe); g.addColorStop(0.24, th.pipeHi); g.addColorStop(0.34, th.pipeHi);
   g.addColorStop(0.5, th.pipe); g.addColorStop(0.85, th.pipeLo); g.addColorStop(1, '#141a20');
   return g;
+}
+
+function drawSpikes(x, y, tx, ty, th) {
+  const kind = G.lvl.def.theme === 'bathroom' ? 'swab' : G.lvl.def.theme === 'kitchen' ? 'pick' : 'mix';
+  ctx.fillStyle = 'rgba(60,40,20,.85)'; ctx.beginPath(); ctx.ellipse(x + 16, y + 32, 16, 5, 0, Math.PI, 0); ctx.fill();
+  for (let i = 0; i < 5; i++) {
+    const h = hash(tx * 13 + i * 7 + ty);
+    const bx = x + 4 + i * 6, ang = (h - 0.5) * 0.5, len = 14 + h * 4;
+    const tipx = bx + Math.sin(ang) * len, tipy = y + 31 - Math.cos(ang) * len;
+    if (kind === 'swab' || (kind === 'mix' && h > 0.75)) {
+      ctx.strokeStyle = '#1a1012'; ctx.lineWidth = 3.5; ctx.beginPath(); ctx.moveTo(bx, y + 31); ctx.lineTo(tipx, tipy); ctx.stroke();
+      ctx.strokeStyle = i % 2 ? '#7fc8f0' : '#f2f2f2'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(bx, y + 31); ctx.lineTo(tipx, tipy); ctx.stroke();
+      ctx.fillStyle = '#1a1012'; ctx.beginPath(); ctx.ellipse(tipx, tipy, 3.2, 4.2, ang, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = '#fbfbf4'; ctx.beginPath(); ctx.ellipse(tipx, tipy, 2.2, 3.2, ang, 0, Math.PI * 2); ctx.fill();
+    } else if (kind === 'mix' && h > 0.55 && i % 2 === 0) {
+      ctx.strokeStyle = '#1a1012'; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(bx, y + 31); ctx.lineTo(tipx, tipy); ctx.stroke();
+      ctx.strokeStyle = '#e8e2cc'; ctx.lineWidth = 1.6; ctx.beginPath(); ctx.moveTo(bx, y + 31); ctx.lineTo(tipx, tipy);
+      for (let k = 1; k < 4; k++) { const px = bx + (tipx - bx) * k / 4, py = y + 31 + (tipy - y - 31) * k / 4; ctx.moveTo(px - 4, py + 2); ctx.lineTo(px, py); ctx.lineTo(px + 4, py + 2); }
+      ctx.stroke();
+    } else {
+      ctx.strokeStyle = '#1a1012'; ctx.lineWidth = 3.5; ctx.beginPath(); ctx.moveTo(bx, y + 31); ctx.lineTo(tipx, tipy); ctx.stroke();
+      ctx.strokeStyle = '#e3c48a'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(bx, y + 31); ctx.lineTo(tipx, tipy); ctx.stroke();
+      ctx.strokeStyle = '#fff4d6'; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(bx + (tipx - bx) * 0.75, tipy + (y + 31 - tipy) * 0.25); ctx.lineTo(tipx, tipy); ctx.stroke();
+    }
+  }
+  if (kind === 'pick' && hash(tx * 3 + ty) > 0.5) {
+    ctx.strokeStyle = '#e8e2cc'; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(x + 8, y + 27); ctx.lineTo(x + 24, y + 27);
+    for (let k = 0; k < 4; k++) { ctx.moveTo(x + 11 + k * 4, y + 23); ctx.lineTo(x + 11 + k * 4, y + 31); }
+    ctx.stroke();
+  }
 }
 
 function drawUpgrade(x, y, type) {
