@@ -524,7 +524,7 @@ const LEVELS = [
     }
   },
   {
-    name: 'Септик', theme: 'septic', boss: 'septic', w: 194, time: 340,
+    name: 'Септик', theme: 'septic', boss: 'septic', w: 194, time: 340, flood: true,
     build(b) {
       b.g(0, 22); b.set(3, 13, 'S');
       b.sign(5, 'Септик. Здесь живут крысы…', 'Септик. Здесь живут крысы…');
@@ -662,7 +662,8 @@ function buildLevel(idx) {
   const under = buildUnder(b, idx, underX0, UNDER_LEN);
   const L = { def, w, grid, plats, signs, nuts: [], enemies: [], drips: [], drops: [], flags: [], exit: null,
               start: { x: 100, y: 400 }, clogHp: new Map(), bumps: new Map(), boss: null, theme: THEMES[def.theme], loot,
-              mainTheme: THEMES[def.theme], underTheme: makeUnderTheme(THEMES[def.theme]), underX0, mainW: def.w, warps: [], inUnder: false };
+              mainTheme: THEMES[def.theme], underTheme: makeUnderTheme(THEMES[def.theme]), underX0, mainW: def.w, warps: [], inUnder: false,
+              flood: under.floodStop ? { on: false, y: VH + 40, delay: 0, stop: under.floodStop } : null };
   const pipeTop = x => { for (let y = 0; y < H; y++) if (grid[y][x] === '[') return y; return 12; };
   if (warpMarks.in !== null) L.warps.push({ tx: warpMarks.in, ty: pipeTop(warpMarks.in), to: { tx: under.arrive, ty: pipeTop(under.arrive) } });
   if (warpMarks.out !== null) L.warps.push({ tx: under.leave, ty: pipeTop(under.leave), to: { tx: warpMarks.out, ty: pipeTop(warpMarks.out) } });
@@ -690,7 +691,33 @@ function makeUnderTheme(th) {
     wall: '#3b2a29', wall2: '#2f2120', grout: '#120a0a', top: '#3f6a2a', pipe: '#4e5f56', pipeHi: '#7f9286', pipeLo: '#232b27',
     dark: 0.86, rain: false, under: true });
 }
+// Уникальное подземелье «Септика»: поднимающаяся жижа, надо карабкаться вверх к выходу под потолком
+function buildFloodUnder(b, x0, len) {
+  const xe = x0 + len - 1;
+  b.fill(x0, 0, xe, 1, '#'); b.g(x0, xe); b.fill(x0, 2, x0, 13, '#'); b.fill(xe, 2, xe, 13, '#');
+  const arrive = x0 + 2; b.pipe(arrive, 12);
+  b.sign(x0 + 8, 'ЖИЖА ПОДНИМАЕТСЯ! Беги наверх!', 'ЖИЖА ПОДНИМАЕТСЯ! Беги наверх!');
+  // разбег по низу
+  b.row(x0 + 10, x0 + 14, 11, 'o');
+  b.spikes(x0 + 12, x0 + 13); b.set(x0 + 16, 13, 'r');
+  b.fill(x0 + 20, 14, x0 + 22, 16, ' '); b.row(x0 + 20, x0 + 22, 10, 'o'); b.set(x0 + 21, 2, 'd');
+  b.set(x0 + 26, 13, 'h');
+  b.col(x0 + 29, 2, 9, '#'); b.col(x0 + 29, 10, 13, 'C'); b.loot(x0 + 29, 13, 'triple');
+  // подъём
+  b.fill(x0 + 33, 12, x0 + 36, 13, '#'); b.set(x0 + 35, 11, 'k');
+  b.fill(x0 + 39, 10, x0 + 41, 13, '#'); b.row(x0 + 39, x0 + 41, 9, 'o');
+  b.row(x0 + 44, x0 + 46, 8, '-'); b.row(x0 + 44, x0 + 46, 7, 'o');
+  b.fill(x0 + 49, 7, x0 + 51, 13, '#'); b.set(x0 + 50, 6, 'o');
+  b.plat(x0 + 53, 7, 'v', 3);
+  b.row(x0 + 57, x0 + 64, 5, '='); b.row(x0 + 57, x0 + 59, 4, 'o'); b.set(x0 + 61, 4, 'k'); b.set(x0 + 60, 2, 'L');
+  // высокий уступ с выходом
+  b.fill(x0 + 67, 6, x0 + 76, 13, '#');
+  const leave = x0 + 71; b.pipe(leave, 4, 5);
+  return { arrive, leave, floodStop: 6 * T + 6 };
+}
+
 function buildUnder(b, idx, x0, len) {
+  if (LEVELS[idx].flood) return buildFloodUnder(b, x0, len);
   const xe = x0 + len - 1;
   // скала: потолок (ряды 0–6), пол (14–16), стены по краям
   b.fill(x0, 0, xe, 6, '#'); b.g(x0, xe); b.fill(x0, 7, x0, 13, '#'); b.fill(xe, 7, xe, 13, '#');
@@ -1045,6 +1072,18 @@ function updatePlay() {
     }
   }
 
+  // поднимающаяся жижа
+  if (L.flood && L.flood.on && L.inUnder) {
+    const F = L.flood;
+    if (F.delay > 0) F.delay--; else if (F.y > F.stop) F.y -= 0.2;
+    if (G.frame % 50 === 0 && F.y > F.stop) { tone(55, 45, 0.5, 'sawtooth', 0.05); noise(0.3, 0.05, 160); }
+    if (P.y + P.h > F.y + 10) {
+      particles(P.x + P.w / 2, F.y, 24, L.theme.liq, 4, 0.3, 5, 40); SFX.splash(); killPlayer(); return;
+    }
+    for (const e of L.enemies) if (!e.dead && e.y + e.h > F.y + 6) { e.gone = true; particles(e.x + e.w / 2, F.y, 8, L.theme.liq, 3, 0.3, 4, 30); }
+    for (const it of G.items) if (it.y > F.y + 10) it.gone = true;
+  }
+
   // мусор-шипы: зубочистки, ватные палочки, кости
   {
     const lx = Math.floor((P.x + 3) / T), rx = Math.floor((P.x + P.w - 3) / T);
@@ -1281,6 +1320,7 @@ function updateWarp(P, L) {
       G.jets = []; G.bshots = []; G.waves = [];
       W.phase = 'up'; W.t = 0; W.top = d.ty * T; SFX.pipe();
       if (L.inUnder) popText(P.x + 11, P.y - 60, 'НИЖНИЙ ПУТЬ', '#ff8a5a');
+      if (L.flood) { L.flood.on = L.inUnder; L.flood.y = VH + 40; L.flood.delay = 200; }
     }
   } else {
     P.y -= 1.2;
@@ -1711,6 +1751,19 @@ function drawWorld(L) {
   ctx.globalAlpha = 1;
   for (const p of G.pops) { ctx.globalAlpha = Math.min(1, p.life / 20); text(p.text, p.x - camx, p.y, 16, p.color, 'center'); }
   ctx.globalAlpha = 1;
+  // поднимающаяся жижа (рисуется поверх всего, кроме света)
+  if (L.flood && L.flood.on && L.inUnder) {
+    const fy = L.flood.y, lq = th.liq;
+    ctx.globalAlpha = 0.92;
+    ctx.fillStyle = lq[0]; ctx.beginPath(); ctx.moveTo(-10, VH + 50);
+    for (let x = -10; x <= VW + 20; x += 12) ctx.lineTo(x, fy + Math.sin((x + camx) * 0.05 + G.frame * 0.09) * 4);
+    ctx.lineTo(VW + 20, VH + 50); ctx.closePath(); ctx.fill();
+    R(0, fy + 10, VW, VH + 60 - fy, lq[2]);
+    ctx.globalAlpha = 1;
+    ctx.fillStyle = lq[1];
+    for (let x = -10; x <= VW + 20; x += 12) R(x, fy - 2 + Math.sin((x + camx) * 0.05 + G.frame * 0.09) * 4, 12, 3, lq[1]);
+    for (let i = 0; i < 10; i++) { const bx = (hash(i * 7) * VW + G.frame * (0.3 + hash(i) * 0.5)) % VW, ph = (G.frame + i * 23) % 50; if (ph < 25) { ctx.strokeStyle = lq[3]; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.arc(bx, fy + 4 - ph * 0.1, 2 + ph * 0.12, 0, Math.PI * 2); ctx.stroke(); } }
+  }
   // дождь
   if (th.rain) {
     ctx.strokeStyle = 'rgba(170,200,230,.28)'; ctx.lineWidth = 1.5; ctx.beginPath();
@@ -2317,6 +2370,7 @@ function drawHUD() {
   if (HW >= 800) text(`${G.levelIdx + 1}. ${L.def.name}`, hudRight() - 92, 20, 16, '#f5c518', 'right');
   text('⏱ ' + G.time, hudRight(), 20, 18, G.time < 40 && G.frame % 30 < 15 ? '#ff4d4d' : '#fff', 'right');
   drawHudButtons();
+  if (L.flood && L.flood.on && L.inUnder && L.flood.y > L.flood.stop && G.frame % 40 < 26) text('⚠ ЖИЖА ПОДНИМАЕТСЯ — НАВЕРХ!', HW / 2, 60, 18, '#c8e06a', 'center');
   // полоска здоровья босса
   const B = L.boss;
   if (B && B.awake && !B.dead) {
