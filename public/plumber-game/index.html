@@ -109,7 +109,7 @@
 // ============================================================
 const DEFAULTS = {
   company: 'Служба прочистки канализации',
-  phone:   '+7 (000) 000-00-00',
+  phone:   '8-980-323-36-99',
   url:     '#',
   cta:     'Вызвать мастера',
   promo:   '',            // например 'ZASOR10' — показывается после победы
@@ -969,7 +969,8 @@ function saveHi() { if (G.score > G.hi) { G.hi = G.score; store('vz_hi', String(
 // ============================================================
 function esc(s) { return String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]); }
 function ctaBlock(lead) {
-  const tel = CONFIG.phone.replace(/[^\d+]/g, '');
+  let tel = CONFIG.phone.replace(/[^\d+]/g, '');
+  if (/^8\d{10}$/.test(tel)) tel = '+7' + tel.slice(1); // 8-XXX… → +7XXX… для ссылки tel:
   const promo = CONFIG.promo ? `<p class="muted">Ваш промокод на скидку:</p><div class="promo">${esc(CONFIG.promo)}</div>` : '';
   const url = CONFIG.url && CONFIG.url !== '#' ? `<a class="btn primary" href="${esc(CONFIG.url)}" target="_top" rel="noopener">${esc(CONFIG.cta)}</a>` : '';
   return `<p>${lead}</p>${promo}
