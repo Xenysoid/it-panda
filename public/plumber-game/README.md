@@ -38,8 +38,16 @@
 <iframe
   src="/plumber-game/index.html?company=ПрочистКо&phone=%2B79990000000&url=https://site.ru/zakaz&promo=ZASOR10"
   style="width:100%;max-width:960px;aspect-ratio:960/544;border:0;border-radius:12px"
-  allow="autoplay" title="Игра Вантузыч"></iframe>
+  allow="autoplay; fullscreen" allowfullscreen title="Игра Вантузыч"></iframe>
 ```
+
+Атрибуты `allow="fullscreen"` и `allowfullscreen` нужны, чтобы внутри iframe работал полноэкранный режим.
 
 Кнопка заказа открывается с `target="_top"`, т.е. в основном окне сайта, а не внутри iframe.
 В этом React-проекте игра лежит в `public/`, поэтому доступна по адресу `/plumber-game/index.html`.
+
+## Полноэкранный режим на телефоне
+
+- **Android (Chrome и др.)**: при нажатии на экран для старта игра разворачивается на весь экран и поворачивается горизонтально. Справа вверху есть кнопка полноэкранного режима.
+- **iPhone**: Safari не разрешает сайтам полноэкранный режим. Чтобы играть без адресной строки, нужно в Safari нажать «Поделиться» → «На экран Домой» и запускать игру с иконки.
+- В вертикальной ориентации показывается подсказка повернуть телефон, а игра ставится на паузу.

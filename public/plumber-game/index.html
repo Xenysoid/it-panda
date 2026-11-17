@@ -2,7 +2,12 @@
 <html lang="ru">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="theme-color" content="#0b1016">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Вантузыч">
 <title>Вантузыч: Битва с засорами</title>
 <meta name="description" content="Браузерная игра-платформер про сантехника, который прочищает трубы и побеждает засоры.">
 <!--
@@ -40,8 +45,14 @@
   .btn.ghost { background:transparent; color:var(--text); border:2px solid #3a4a5a; }
   .btn.ghost:hover { border-color:var(--muted); }
   .phone { font-size:24px; font-weight:bold; color:var(--text); text-decoration:none; display:block; margin-top:6px; }
+  #rotate { position:fixed; inset:0; display:none; z-index:10; background:#0b1016; color:#eef3f8; text-align:center;
+    flex-direction:column; align-items:center; justify-content:center; padding:24px; box-sizing:border-box; font-size:20px; }
+  #rotate .ico { font-size:64px; animation: rot 2s ease-in-out infinite; margin-bottom:16px; }
+  #rotate small { color:#9fb0bf; font-size:15px; margin-top:10px; }
+  @keyframes rot { 0%,30% { transform:rotate(0) } 60%,100% { transform:rotate(-90deg) } }
+  @media (orientation: portrait) { body.touch #rotate { display:flex; } }
   #touch { position:fixed; left:0; right:0; bottom:0; display:none; justify-content:space-between;
-    padding:0 14px 14px; pointer-events:none; }
+    padding:0 calc(14px + env(safe-area-inset-right)) calc(14px + env(safe-area-inset-bottom)) calc(14px + env(safe-area-inset-left)); pointer-events:none; }
   #touch.on { display:flex; }
   #touch .grp { display:flex; gap:12px; pointer-events:auto; }
   .tb { width:68px; height:68px; border-radius:50%; background:rgba(255,255,255,.14); border:2px solid rgba(255,255,255,.35);
@@ -58,6 +69,7 @@
     <div id="panel" role="dialog" aria-live="polite"></div>
   </div>
 </div>
+<div id="rotate"><div class="ico">📱</div><b>Поверните телефон горизонтально</b><small>Так играть гораздо удобнее</small></div>
 <div id="touch">
   <div class="grp">
     <div class="tb" data-k="left">◀</div>
@@ -131,7 +143,28 @@ addEventListener('keyup', e => { const a = KEYMAP[e.code]; if (a) { e.preventDef
 addEventListener('blur', () => { for (const k in keys) keys[k] = false; if (G.state === 'play') setPause(true); });
 document.addEventListener('visibilitychange', () => { if (document.hidden && G.state === 'play') setPause(true); });
 
-if (isTouch) document.getElementById('touch').classList.add('on');
+if (isTouch) { document.getElementById('touch').classList.add('on'); document.body.classList.add('touch'); }
+
+// ---------- Полноэкранный режим
+const fsEl = document.documentElement;
+const fsSupported = !!(fsEl.requestFullscreen || fsEl.webkitRequestFullscreen) && !!(document.fullscreenEnabled || document.webkitFullscreenEnabled);
+function isFs() { return !!(document.fullscreenElement || document.webkitFullscreenElement); }
+function lockLandscape() { try { if (screen.orientation && screen.orientation.lock) screen.orientation.lock('landscape').catch(() => {}); } catch (e) {} }
+function toggleFs() {
+  if (!fsSupported) return;
+  try {
+    if (isFs()) (document.exitFullscreen || document.webkitExitFullscreen).call(document);
+    else {
+      const r = (fsEl.requestFullscreen || fsEl.webkitRequestFullscreen).call(fsEl, { navigationUI: 'hide' });
+      if (r && r.then) r.then(lockLandscape).catch(() => {}); else lockLandscape();
+    }
+  } catch (e) {}
+}
+document.addEventListener('fullscreenchange', () => setTimeout(resize, 50));
+document.addEventListener('webkitfullscreenchange', () => setTimeout(resize, 50));
+const portraitMq = matchMedia('(orientation: portrait)');
+function onOrient() { if (isTouch && portraitMq.matches && G.state === 'play') setPause(true); setTimeout(resize, 100); }
+if (portraitMq.addEventListener) portraitMq.addEventListener('change', onOrient); else if (portraitMq.addListener) portraitMq.addListener(onOrient);
 document.querySelectorAll('#touch .tb').forEach(el => {
   const k = el.dataset.k;
   const on = e => { e.preventDefault(); ensureAudio(); kdown(k); el.classList.add('down'); if (el.setPointerCapture) try { el.setPointerCapture(e.pointerId); } catch (_) {} };
@@ -140,15 +173,17 @@ document.querySelectorAll('#touch .tb').forEach(el => {
   el.addEventListener('pointercancel', off); el.addEventListener('lostpointercapture', off);
 });
 // Кнопки звука и паузы нарисованы в HUD (правый верхний угол канваса)
-const HUD_BTNS = { mute: { x: VW - 76, y: 5, w: 32, h: 30 }, pause: { x: VW - 38, y: 5, w: 32, h: 30 } };
+const HUD_BTNS = { mute: { x: VW - 76, y: 5, w: 32, h: 30 }, pause: { x: VW - 38, y: 5, w: 32, h: 30 }, fs: { x: VW - 114, y: 5, w: 32, h: 30 } };
+const HUD_RIGHT = fsSupported ? VW - 126 : VW - 88;
 canvas.addEventListener('pointerdown', e => {
   ensureAudio();
   const r = canvas.getBoundingClientRect();
   const x = (e.clientX - r.left) / r.width * VW, y = (e.clientY - r.top) / r.height * VH;
   const inB = b => x >= b.x - 6 && x <= b.x + b.w + 6 && y >= b.y - 6 && y <= b.y + b.h + 6;
   if (inB(HUD_BTNS.mute)) { toggleMute(); return; }
+  if (fsSupported && inB(HUD_BTNS.fs)) { toggleFs(); return; }
   if (inB(HUD_BTNS.pause) && G.state !== 'title') { if (G.state === 'play') setPause(true); else if (G.state === 'pause') setPause(false); return; }
-  if (G.state === 'title') startGame();
+  if (G.state === 'title') { if (isTouch && !isFs()) toggleFs(); startGame(); }
 });
 
 // ============================================================
@@ -1409,8 +1444,8 @@ function drawHUD() {
   text('СЧЁТ ' + String(G.score).padStart(6, '0'), 250, 20, 18, '#fff');
   if (G.power) { drawGunItem(415, 8); text('ВОДА', 445, 20, 14, '#7fd4ff'); }
   const L = G.lvl;
-  text(`${G.levelIdx + 1}. ${L.def.name}`, VW - 180, 20, 16, '#f5c518', 'right');
-  text('⏱ ' + G.time, VW - 88, 20, 18, G.time < 40 && G.frame % 30 < 15 ? '#ff4d4d' : '#fff', 'right');
+  text(`${G.levelIdx + 1}. ${L.def.name}`, HUD_RIGHT - 92, 20, 16, '#f5c518', 'right');
+  text('⏱ ' + G.time, HUD_RIGHT, 20, 18, G.time < 40 && G.frame % 30 < 15 ? '#ff4d4d' : '#fff', 'right');
   drawHudButtons();
   // полоска здоровья главного засора
   const big = L.big;
@@ -1422,7 +1457,17 @@ function drawHUD() {
 }
 
 function drawHudButtons() {
-  const m = HUD_BTNS.mute, p = HUD_BTNS.pause;
+  const m = HUD_BTNS.mute, p = HUD_BTNS.pause, f = HUD_BTNS.fs;
+  if (fsSupported) {
+    R(f.x, f.y, f.w, f.h, 'rgba(255,255,255,.12)'); R(f.x, f.y, f.w, 1, 'rgba(255,255,255,.3)');
+    const o = isFs() ? 1 : 0, x1 = f.x + 8, y1 = f.y + 7, x2 = f.x + 24, y2 = f.y + 23;
+    ctx.strokeStyle = '#fff'; ctx.lineWidth = 2; ctx.beginPath();
+    for (const [cx, cy, dx, dy] of [[x1, y1, 1, 1], [x2, y1, -1, 1], [x1, y2, 1, -1], [x2, y2, -1, -1]]) {
+      const px = o ? cx + dx * 5 : cx, py = o ? cy + dy * 5 : cy;
+      ctx.moveTo(px + (o ? -dx : dx) * 5, py); ctx.lineTo(px, py); ctx.lineTo(px, py + (o ? -dy : dy) * 5);
+    }
+    ctx.stroke();
+  }
   for (const b of [m, p]) { R(b.x, b.y, b.w, b.h, 'rgba(255,255,255,.12)'); R(b.x, b.y, b.w, 1, 'rgba(255,255,255,.3)'); }
   // динамик
   R(m.x + 7, m.y + 11, 5, 8, '#fff');
