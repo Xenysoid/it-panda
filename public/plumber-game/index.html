@@ -85,6 +85,7 @@
   #touch .grp { display:flex; gap:12px; pointer-events:auto; }
   .tb { width:68px; height:68px; border-radius:50%; background:rgba(255,255,255,.14); border:2px solid rgba(255,255,255,.35);
     color:#fff; font-size:12px; font-weight:bold; letter-spacing:.5px; display:flex; align-items:center; justify-content:center; touch-action:none; }
+  .tb.sm { width:52px; height:52px; align-self:flex-end; font-size:14px; }
   .tb.act { background:rgba(255,122,26,.35); border-color:rgba(255,160,90,.8); }
   .tb.jmp { background:rgba(80,170,255,.3); border-color:rgba(130,200,255,.8); }
   .tb.down { background:rgba(255,255,255,.3); }
@@ -102,6 +103,7 @@
 <div id="touch">
   <div class="grp">
     <div class="tb" data-k="left">◀</div>
+    <div class="tb sm" data-k="down">▼</div>
     <div class="tb" data-k="right">▶</div>
   </div>
   <div class="grp">
@@ -279,6 +281,9 @@ const MUSIC = {
   septic: { bpm: 118,
     lead: [60,0,0,63, 0,0,62,0, 60,0,0,56, 0,0,55,0, 60,0,0,63, 0,0,66,0, 67,0,66,63, 62,0,0,0],
     bass: [36,0,36,0, 36,0,43,0, 32,0,32,0, 31,0,31,0, 36,0,36,0, 42,0,42,0, 43,0,43,0, 31,0,43,0] },
+  under: { bpm: 96,
+    lead: [57,0,0,0, 60,0,0,59, 0,0,57,0, 0,0,0,0, 56,0,0,0, 59,0,0,57, 0,0,53,0, 0,0,0,0],
+    bass: [33,0,33,0, 33,0,33,0, 33,0,33,0, 32,0,32,0, 29,0,29,0, 29,0,29,0, 28,0,28,0, 28,0,40,0] },
   boss: { bpm: 176,
     lead: [62,62,0,65, 62,0,68,0, 67,0,65,0, 62,0,61,0, 62,62,0,65, 62,0,70,0, 69,0,68,0, 67,0,65,0],
     bass: [38,0,38,50, 38,0,38,50, 37,0,37,49, 37,0,37,49, 36,0,36,48, 36,0,36,48, 35,0,35,47, 37,0,49,0] },
@@ -298,7 +303,7 @@ function musicTick() {
   if (!actx || actx.state !== 'running') return;
   const playing = !muted && (G.state === 'play' || G.state === 'intro' || G.state === 'title');
   const bossOn = G.state === 'play' && G.lvl && G.lvl.boss && G.lvl.boss.awake && !G.lvl.boss.dead;
-  const want = playing ? (bossOn ? 'boss' : G.lvl ? G.lvl.def.theme : 'kitchen') : null;
+  const want = playing ? (bossOn ? 'boss' : G.lvl ? (G.lvl.inUnder && G.state !== 'title' ? 'under' : G.lvl.def.theme) : 'kitchen') : null;
   if (want !== musicTheme) { musicTheme = want; musicStep = 0; musicNext = actx.currentTime + 0.08; }
   if (!want) return;
   const m = MUSIC[want], dt = 60 / m.bpm / 2;
@@ -350,6 +355,7 @@ const SFX = {
   bossDie:() => { noise(0.9, 0.22, 200); [196, 247, 294, 392, 494, 587, 784].forEach((f, i) => tone(f, f, 0.12, 'square', 0.05, 0.3 + i * 0.09)); },
   roar:  () => { tone(140, 55, 0.7, 'sawtooth', 0.09); noise(0.6, 0.12, 220); },
   spit:  () => { tone(320, 110, 0.16, 'square', 0.06); noise(0.12, 0.08, 700); },
+  pipe:  () => { [0, 1, 2, 3].forEach(i => tone(520 - i * 90, 400 - i * 90, 0.09, 'square', 0.05, i * 0.08)); },
   slam:  () => { noise(0.45, 0.22, 140); tone(90, 35, 0.45, 'sine', 0.18); },
   fart:  () => {
     if (!actx || muted) return;
@@ -388,7 +394,8 @@ const LEVELS = [
       b.set(21, 13, 'g'); b.spikes(19, 20);
       b.sign(24, 'X — удар вантузом!', 'Кнопка ВАНТУЗ — удар!');
       b.col(28, 0, 10, '#'); b.col(28, 11, 13, 'C');
-      b.pipe(32, 12); b.set(36, 13, 'g'); b.pipe(40, 11); b.row(40, 41, 10, 'o');
+      b.pipe(32, 12); b.set(36, 13, 'g'); b.pipe(40, 11); b.row(40, 41, 10, 'o'); b.warpIn(40);
+      b.sign(37, '↓ на трубе со стрелкой — вниз', '▼ на трубе со стрелкой — вниз', 13);
       b.g(48, 70);
       b.row(51, 55, 10, '-'); b.row(51, 55, 9, 'o');
       b.set(59, 13, 'r'); b.spikes(56, 57);
@@ -404,7 +411,7 @@ const LEVELS = [
       b.row(113, 116, 7, 'o');
       b.g(117, 140);
       b.col(125, 0, 10, '#'); b.col(125, 11, 13, 'C'); b.loot(125, 13, 'triple');
-      b.set(129, 13, 'h'); b.set(133, 10, 'L'); b.spikes(121, 122); b.spikes(136, 137);
+      b.set(129, 13, 'h'); b.set(133, 10, 'L'); b.spikes(121, 122); b.spikes(136, 137); b.pipe(138, 12); b.warpOut(138);
       b.g(141, 185);
       b.set(142, 13, 'r'); b.set(143, 13, 'F');
       b.sign(146, 'Босс! Бей вантузом, прыгай сверху', 'Босс! Бей вантузом, прыгай сверху');
@@ -421,7 +428,7 @@ const LEVELS = [
       b.row(9, 12, 11, 'o');
       b.set(14, 10, 'B'); b.set(15, 10, 'C'); b.set(16, 10, 'P'); b.set(17, 10, 'C'); b.set(18, 10, 'B'); b.loot(17, 10, 'rapid');
       b.set(24, 13, 'h'); b.spikes(20, 21);
-      b.pipe(26, 12); b.set(30, 13, 'k'); b.pipe(34, 11); b.row(34, 35, 10, 'o');
+      b.pipe(26, 12); b.set(30, 13, 'k'); b.pipe(34, 11); b.row(34, 35, 10, 'o'); b.warpIn(34);
       b.g(41, 75); b.row(43, 52, 14, '~');
       b.row(44, 46, 11, '-'); b.row(49, 51, 10, '-'); b.row(44, 46, 10, 'o'); b.row(49, 51, 9, 'o');
       b.set(56, 13, 'h'); b.set(60, 13, 'g'); b.spikes(54, 55);
@@ -436,7 +443,7 @@ const LEVELS = [
       b.set(128, 13, 'h'); b.set(131, 13, 'h'); b.spikes(126, 127);
       b.set(134, 10, 'B'); b.set(135, 10, 'L'); b.set(136, 10, 'B');
       b.fill(140, 0, 141, 10, '#'); b.fill(140, 11, 141, 13, 'C'); b.loot(140, 13, 'triple');
-      b.set(145, 13, 'k');
+      b.set(144, 13, 'k'); b.pipe(146, 12); b.warpOut(146);
       b.g(151, 199);
       b.set(149, 13, 'F');
       b.sign(153, 'Волосатый ком! Он прыгает', 'Волосатый ком! Он прыгает');
@@ -456,7 +463,7 @@ const LEVELS = [
       b.set(26, 13, 'r'); b.spikes(22, 23);
       b.g(31, 60); b.row(31, 40, 14, '~'); b.plat(31, 12, 'h', 5); b.row(33, 37, 9, 'o');
       b.set(45, 13, 'g'); b.set(48, 13, 'g'); b.spikes(50, 51);
-      b.pipe(52, 11); b.set(55, 13, 'k'); b.pipe(58, 11);
+      b.pipe(52, 11); b.set(55, 13, 'k'); b.pipe(58, 11); b.warpIn(58);
       b.g(65, 95);
       b.set(67, 13, 'F');
       b.fill(72, 0, 73, 10, '#'); b.fill(72, 11, 73, 13, 'C'); b.loot(72, 13, 'triple');
@@ -467,7 +474,7 @@ const LEVELS = [
       b.plat(98, 12, 'h', 3); b.row(99, 102, 9, 'o');
       b.fill(107, 12, 109, 14, '#'); b.set(108, 11, 'k');
       b.plat(111, 12, 'h', 5); b.row(112, 117, 9, 'o');
-      b.set(130, 13, 'r'); b.set(134, 13, 'r'); b.pipe(137, 11); b.spikes(127, 128);
+      b.set(130, 13, 'r'); b.set(134, 13, 'r'); b.pipe(137, 11); b.spikes(127, 128); b.warpOut(137);
       b.g(144, 205);
       b.set(147, 13, 'F');
       b.fill(146, 0, 168, 1, '#'); b.set(155, 2, 'd'); b.set(163, 2, 'd');
@@ -487,7 +494,7 @@ const LEVELS = [
       b.sign(5, 'Ливнёвка: смотри под ноги!', 'Ливнёвка: смотри под ноги!');
       b.set(9, 10, 'B'); b.set(10, 10, 'P'); b.set(11, 10, 'B'); b.row(14, 17, 11, 'o');
       b.set(20, 13, 'r'); b.set(24, 13, 'k'); b.spikes(15, 16);
-      b.g(30, 34); b.pipe(31, 12);
+      b.g(30, 34); b.pipe(31, 12); b.warpIn(31);
       b.g(38, 64);
       b.row(42, 46, 10, '-'); b.row(42, 46, 9, 'o');
       b.set(48, 13, 'g'); b.set(52, 13, 'r'); b.spikes(49, 50);
@@ -504,7 +511,7 @@ const LEVELS = [
       b.set(110, 10, 'B'); b.set(111, 10, 'L'); b.set(112, 10, 'B');
       b.set(116, 13, 'r');
       b.g(124, 160);
-      b.pipe(127, 12); b.pipe(131, 11); b.pipe(135, 10);
+      b.pipe(127, 12); b.pipe(131, 11); b.pipe(135, 10); b.warpOut(135);
       b.row(138, 142, 8, '='); b.row(138, 142, 7, 'o');
       b.set(147, 13, 'k'); b.set(150, 13, 'r'); b.spikes(143, 144);
       b.fill(154, 0, 155, 10, '#'); b.fill(154, 11, 155, 13, 'C'); b.loot(154, 13, 'triple');
@@ -525,7 +532,7 @@ const LEVELS = [
       b.set(15, 13, 'r'); b.set(19, 13, 'r'); b.spikes(12, 13);
       b.g(23, 50); b.row(25, 34, 14, '~');
       b.row(26, 28, 11, '-'); b.row(31, 33, 11, '-'); b.row(26, 28, 10, 'o'); b.row(31, 33, 10, 'o');
-      b.set(38, 13, 'g'); b.set(41, 13, 'k'); b.pipe(45, 11); b.spikes(36, 37);
+      b.set(38, 13, 'g'); b.set(41, 13, 'k'); b.pipe(45, 11); b.spikes(36, 37); b.warpIn(45);
       b.g(54, 90);
       b.set(56, 13, 'F');
       b.fill(60, 0, 61, 10, '#'); b.fill(60, 11, 61, 13, 'C'); b.loot(60, 13, 'rapid'); b.loot(61, 13, 'triple');
@@ -538,7 +545,7 @@ const LEVELS = [
       b.fill(101, 12, 102, 14, '#');
       b.plat(104, 11, 'h', 4); b.row(105, 109, 8, 'o');
       b.fill(113, 11, 114, 14, '#');
-      b.set(122, 13, 'h'); b.set(126, 13, 'r'); b.set(129, 10, 'L'); b.pipe(132, 11); b.spikes(124, 125);
+      b.set(122, 13, 'h'); b.set(126, 13, 'r'); b.set(129, 10, 'L'); b.pipe(132, 11); b.spikes(124, 125); b.warpOut(132);
       b.g(139, 193);
       b.set(141, 13, 'F');
       b.set(145, 13, 'k'); b.set(148, 13, 'g'); b.spikes(143, 144);
@@ -562,7 +569,7 @@ const LEVELS = [
       b.set(47, 13, 'F');
       b.col(52, 0, 10, '#'); b.col(52, 11, 13, 'C'); b.loot(52, 13, 'rapid');
       b.set(56, 13, 'h'); b.set(60, 13, 'h'); b.spikes(58, 59);
-      b.pipe(63, 11); b.set(66, 13, 'g'); b.pipe(68, 11);
+      b.pipe(63, 11); b.set(66, 13, 'g'); b.pipe(68, 11); b.warpIn(68);
       b.g(71, 130); b.row(74, 97, 14, '~');
       b.fill(72, 0, 100, 1, '#'); b.set(77, 2, 'd'); b.set(86, 2, 'd'); b.set(94, 2, 'd');
       b.row(75, 78, 11, '='); b.plat(80, 12, 'v', 4);
@@ -572,7 +579,7 @@ const LEVELS = [
       b.set(113, 10, 'B'); b.set(114, 10, 'B'); b.set(115, 10, 'B');
       b.fill(120, 0, 121, 10, '#'); b.fill(120, 11, 121, 13, 'C'); b.loot(120, 13, 'triple');
       b.set(125, 13, 'g');
-      b.g(134, 138); b.pipe(135, 12);
+      b.g(134, 138); b.pipe(135, 12); b.warpOut(135);
       b.g(142, 165);
       b.set(144, 13, 'F');
       b.row(148, 152, 10, '-'); b.row(148, 152, 9, 'o');
@@ -630,10 +637,11 @@ const ENEMY_DEF = {
 };
 
 function buildLevel(idx) {
-  const def = LEVELS[idx], w = def.w, H = ROWS;
+  const def = LEVELS[idx], H = ROWS;
+  const UNDER_LEN = 86, underX0 = def.w + 1, w = def.w + 1 + UNDER_LEN;
   const grid = []; for (let y = 0; y < H; y++) grid.push(new Array(w).fill(' '));
   const plats = [], signs = [];
-  let arena = null; const loot = new Map();
+  let arena = null; const loot = new Map(); const warpMarks = { in: null, out: null };
   const b = {
     boss(x1, x2) { arena = { x1, x2 }; b.fill(x2 + 1, 0, x2 + 1, 13, 'Q'); },
     set(x, y, c) { if (x >= 0 && x < w && y >= 0 && y < H) grid[y][x] = c; },
@@ -645,11 +653,19 @@ function buildLevel(idx) {
     plat(x, y, axis = 'h', range = 4) { plats.push({ sx: x * T, sy: y * T, axis, range: range * T, w: 96, h: 12, x: x * T, y: y * T, dx: 0, dy: 0 }); },
     spikes(x1, x2, y = 13) { for (let x = x1; x <= x2; x++) b.set(x, y, '^'); },
     loot(x, y, type) { loot.set(x + ',' + y, type); },
+    warpIn(x) { warpMarks.in = x; },
+    warpOut(x) { warpMarks.out = x; },
     sign(x, kb, touch, y = 13) { signs.push({ x: x * T + 16, y: (y + 1) * T, text: isTouch ? touch : kb }); },
   };
   def.build(b);
+  b.fill(def.w, 0, def.w, H - 1, '#');
+  const under = buildUnder(b, idx, underX0, UNDER_LEN);
   const L = { def, w, grid, plats, signs, nuts: [], enemies: [], drips: [], drops: [], flags: [], exit: null,
-              start: { x: 100, y: 400 }, clogHp: new Map(), bumps: new Map(), boss: null, theme: THEMES[def.theme], loot };
+              start: { x: 100, y: 400 }, clogHp: new Map(), bumps: new Map(), boss: null, theme: THEMES[def.theme], loot,
+              mainTheme: THEMES[def.theme], underTheme: makeUnderTheme(THEMES[def.theme]), underX0, mainW: def.w, warps: [], inUnder: false };
+  const pipeTop = x => { for (let y = 0; y < H; y++) if (grid[y][x] === '[') return y; return 12; };
+  if (warpMarks.in !== null) L.warps.push({ tx: warpMarks.in, ty: pipeTop(warpMarks.in), to: { tx: under.arrive, ty: pipeTop(under.arrive) } });
+  if (warpMarks.out !== null) L.warps.push({ tx: under.leave, ty: pipeTop(under.leave), to: { tx: warpMarks.out, ty: pipeTop(warpMarks.out) } });
   for (let y = 0; y < H; y++) for (let x = 0; x < w; x++) {
     const c = grid[y][x];
     if (c === 'S') { L.start = { x: x * T + 5, y: (y + 1) * T - 30 }; grid[y][x] = ' '; }
@@ -660,7 +676,52 @@ function buildLevel(idx) {
     else if (c === 'E') { L.exit = { x: x * T - 16, y: y * T - 32, w: 64, h: 64 }; grid[y][x] = ' '; }
   }
   if (arena && def.boss) L.boss = makeBoss(arena.x1, arena.x2, def.boss);
+  // в подземелье враги злее
+  for (const e of L.enemies) if (e.x >= underX0 * T) { e.sp *= 1.3; e.vx *= 1.3; }
   return L;
+}
+
+// ============================================================
+//  Нижний путь: тёмный подземный тоннель (генерируется из «кусков»)
+// ============================================================
+function zoneOf(L, x) { return x >= L.underX0 * T ? [L.underX0 * T, L.w * T] : [0, L.mainW * T]; }
+function makeUnderTheme(th) {
+  return Object.assign({}, th, { style: 'brick', bg1: '#160c10', bg2: '#040203', far: '#1d1216', mid: '#150d10',
+    wall: '#3b2a29', wall2: '#2f2120', grout: '#120a0a', top: '#3f6a2a', pipe: '#4e5f56', pipeHi: '#7f9286', pipeLo: '#232b27',
+    dark: 0.86, rain: false, under: true });
+}
+function buildUnder(b, idx, x0, len) {
+  const xe = x0 + len - 1;
+  // скала: потолок (ряды 0–6), пол (14–16), стены по краям
+  b.fill(x0, 0, xe, 6, '#'); b.g(x0, xe); b.fill(x0, 7, x0, 13, '#'); b.fill(xe, 7, xe, 13, '#');
+  const arrive = x0 + 2; b.pipe(arrive, 12);
+  b.sign(x0 + 8, 'Нижний путь: опасно, но быстрее', 'Нижний путь: опасно, но быстрее');
+  const pool = ['rk', 'kh', 'rh', 'kg', 'hk', 'hh'][idx];
+  let ei = 0; const foe = () => pool[(ei++) % pool.length];
+  const SEG = {
+    enemies(sx) { b.row(sx + 2, sx + 5, 11, 'o'); b.set(sx + 3, 13, foe()); b.set(sx + 6, 13, foe()); return 8; },
+    spikes(sx) { b.spikes(sx + 1, sx + 2); b.spikes(sx + 5, sx + 6); for (const x of [sx + 1, sx + 2, sx + 5, sx + 6]) b.set(x, 10, 'o'); return 9; },
+    sewer(sx) { b.row(sx + 1, sx + 8, 14, '~'); b.plat(sx + 1, 12, 'h', 4); b.row(sx + 3, sx + 6, 10, 'o'); return 10; },
+    pit(sx) { b.fill(sx + 2, 14, sx + 4, 16, ' '); b.row(sx + 2, sx + 4, 10, 'o'); return 7; },
+    clogs(sx) { b.col(sx + 3, 7, 13, 'C'); b.loot(sx + 3, 13, idx % 2 ? 'rapid' : 'triple'); b.set(sx + 5, 13, foe()); return 7; },
+    drips(sx) { b.set(sx + 2, 7, 'd'); b.set(sx + 6, 7, 'd'); b.spikes(sx + 4, sx + 4); b.row(sx + 1, sx + 7, 12, 'o'); return 9; },
+    shelves(sx) { b.spikes(sx + 1, sx + 8); b.row(sx + 2, sx + 3, 11, '-'); b.row(sx + 6, sx + 7, 11, '-'); b.row(sx + 2, sx + 7, 9, 'o'); return 10; },
+    heart(sx) { b.set(sx + 3, 10, 'L'); b.set(sx + 5, 13, foe()); return 7; },
+  };
+  const orders = [
+    ['enemies', 'spikes', 'clogs', 'pit', 'heart', 'drips', 'shelves'],
+    ['spikes', 'enemies', 'sewer', 'clogs', 'heart', 'shelves', 'pit'],
+    ['enemies', 'pit', 'shelves', 'clogs', 'heart', 'sewer', 'drips'],
+    ['drips', 'spikes', 'sewer', 'enemies', 'heart', 'clogs', 'shelves'],
+    ['shelves', 'enemies', 'pit', 'clogs', 'heart', 'drips', 'sewer'],
+    ['spikes', 'sewer', 'enemies', 'shelves', 'heart', 'clogs', 'pit'],
+  ][idx];
+  let sx = x0 + 12;
+  orders.forEach((name, i) => { if (i === 4) b.set(sx - 1, 13, 'F'); sx += SEG[name](sx); });
+  const leave = sx + 2; b.pipe(leave, 12);
+  if (leave + 4 >= xe) console.warn('under too long', idx, leave, xe);
+  b.row(leave - 3, leave - 1, 11, 'o');
+  return { arrive, leave };
 }
 
 function makeBoss(x1, x2, key) {
@@ -704,7 +765,8 @@ function loadLevel(idx, fromCheckpoint) {
   G.P = newPlayer(sx, sy);
   G.time = L.def.time; G.timeFrac = 0;
   G.parts = []; G.pops = []; G.items = []; G.jets = []; G.bshots = []; G.waves = [];
-  G.cam.x = clamp(sx - VW / ZOOM * 0.4, 0, L.w * T - VW / ZOOM);
+  L.inUnder = sx >= L.underX0 * T; L.theme = L.inUnder ? L.underTheme : L.mainTheme;
+  { const z = zoneOf(L, sx); G.cam.x = clamp(sx - VW / ZOOM * 0.4, z[0], z[1] - VW / ZOOM); }
   G.cam.y = clamp(sy - VH / ZOOM * 0.6, 0, VH - VH / ZOOM);
 }
 
@@ -849,7 +911,7 @@ function update() {
   if (pressed.mute) toggleMute();
   switch (G.state) {
     case 'title':
-      G.cam.x += 1.2; if (G.lvl && G.cam.x > G.lvl.w * T - VW / ZOOM) G.cam.x = 0;
+      G.cam.x += 1.2; if (G.lvl && G.cam.x > G.lvl.mainW * T - VW / ZOOM) G.cam.x = 0;
       G.cam.y = VH - VH / ZOOM;
       updatePlatforms();
       if (pressed.start || pressed.jump || pressed.act) startGame();
@@ -895,6 +957,18 @@ function updatePlay() {
 
   // таймер
   if (++G.timeFrac >= 60) { G.timeFrac = 0; G.time--; if (G.time <= 0) { G.time = 0; killPlayer(); return; } }
+
+  // --- спуск в трубу
+  if (P.warp) { updateWarp(P, L); return; }
+  if (P.onGround && keys.down && !P.dead) {
+    for (const w of L.warps) {
+      const cx = P.x + P.w / 2;
+      if (cx > w.tx * T + 6 && cx < (w.tx + 2) * T - 6 && Math.abs(P.y + P.h - w.ty * T) < 2) {
+        P.warp = { w, phase: 'down', t: 0 }; P.vx = 0; P.vy = 0; P.ride = null; P.x = w.tx * T + 32 - P.w / 2; SFX.pipe(); break;
+      }
+    }
+    if (P.warp) return;
+  }
 
   // --- игрок
   const dir = (keys.left ? -1 : 0) + (keys.right ? 1 : 0);
@@ -1019,7 +1093,8 @@ function updatePlay() {
 
   // камера
   const vw = VW / ZOOM, vh = VH / ZOOM;
-  const target = clamp(P.x + P.w / 2 - vw * 0.42, 0, L.w * T - vw);
+  const zn = zoneOf(L, P.x);
+  const target = clamp(P.x + P.w / 2 - vw * 0.42, zn[0], zn[1] - vw);
   G.cam.x += (target - G.cam.x) * 0.14;
   const ty = clamp(P.y + P.h / 2 - vh * 0.6, 0, VH - vh);
   G.cam.y += (ty - (G.cam.y || 0)) * 0.12;
@@ -1049,7 +1124,7 @@ function updateBoss() {
   if (B.dead) { B.deadT++; return; }
   const pcx = P.x + P.w / 2, bcx = B.x + B.w / 2;
   if (!B.awake) {
-    if (pcx > B.ax1 + 2.5 * T) {
+    if (pcx > B.ax1 + 2.5 * T && pcx < B.ax2 && !L.inUnder) {
       B.awake = true; B.st = 'roar'; B.t = 70; B.face = pcx < bcx ? -1 : 1;
       for (let y = 0; y <= 13; y++) setTile(B.gateL, y, 'Q');
       G.shake = 14; SFX.roar();
@@ -1190,6 +1265,31 @@ function updateBossShots() {
   G.waves = G.waves.filter(w => w.life > 0);
 }
 
+function updateWarp(P, L) {
+  const W = P.warp;
+  W.t++;
+  if (W.phase === 'down') {
+    P.y += 1.2;
+    if (W.t >= 34) {
+      // переход
+      const d = W.w.to;
+      P.x = d.tx * T + 32 - P.w / 2; P.y = d.ty * T + 2;
+      L.inUnder = P.x >= L.underX0 * T; L.theme = L.inUnder ? L.underTheme : L.mainTheme;
+      const zn = zoneOf(L, P.x), vw = VW / ZOOM, vh = VH / ZOOM;
+      G.cam.x = clamp(P.x + P.w / 2 - vw * 0.42, zn[0], zn[1] - vw);
+      G.cam.y = clamp(P.y - vh * 0.6, 0, VH - vh);
+      G.jets = []; G.bshots = []; G.waves = [];
+      W.phase = 'up'; W.t = 0; W.top = d.ty * T; SFX.pipe();
+      if (L.inUnder) popText(P.x + 11, P.y - 60, 'НИЖНИЙ ПУТЬ', '#ff8a5a');
+    }
+  } else {
+    P.y -= 1.2;
+    if (P.y + P.h <= W.top) { P.y = W.top - P.h; P.warp = null; P.onGround = true; P.inv = Math.max(P.inv, 30); }
+  }
+  W.clipY = W.phase === 'down' ? W.w.ty * T : W.top;
+  updateParticles();
+}
+
 function updateItems() {
   const P = G.P;
   for (const it of G.items) {
@@ -1242,7 +1342,7 @@ function updateEnemies() {
   const L = G.lvl, P = G.P;
   for (const e of L.enemies) {
     if (e.gone) continue;
-    if (!e.active) { if (e.x < G.cam.x + VW + 64) e.active = true; else continue; }
+    if (!e.active) { if (e.x < G.cam.x + VW + 64 && e.x > G.cam.x - 200) e.active = true; else continue; }
     if (e.dead) { e.vy += GRAV; e.y += e.vy; e.x += e.vx; if (e.y > VH + 100) e.gone = true; continue; }
     if (e.squash) { if (--e.squash <= 0) e.gone = true; continue; }
     e.t++;
@@ -1486,6 +1586,24 @@ function drawBackground(th, camx) {
   const g = ctx.createLinearGradient(0, 0, 0, VH);
   g.addColorStop(0, th.bg1); g.addColorStop(1, th.bg2);
   ctx.fillStyle = g; ctx.fillRect(0, 0, VW, VH);
+  if (th.under) {
+    // своды и светящиеся глаза в темноте
+    layer(camx * 0.3, 220, th.far, 0.9, 7);
+    const off = camx * 0.5, seg = 170, i0 = Math.floor(off / seg) - 1;
+    for (let i = i0; i < i0 + Math.ceil(VW / seg) + 3; i++) {
+      const h = hash(i * 31 + 5), x = i * seg - off + h * 120, y = 260 + hash(i * 17) * 160;
+      ctx.strokeStyle = 'rgba(80,60,60,.35)'; ctx.lineWidth = 10; ctx.beginPath(); ctx.arc(i * seg - off + 85, 470, 110, Math.PI, 0); ctx.stroke();
+      if (h > 0.35) {
+        const blink = ((G.frame + i * 97) % 260) < 8;
+        if (!blink) {
+          const col = h > 0.7 ? '255,60,40' : '210,230,80';
+          ctx.fillStyle = `rgba(${col},.85)`; R(x, y, 6, 3, ctx.fillStyle); R(x + 14, y, 6, 3, ctx.fillStyle);
+          ctx.fillStyle = `rgba(${col},.18)`; ctx.beginPath(); ctx.arc(x + 10, y + 1, 18, 0, Math.PI * 2); ctx.fill();
+        }
+      }
+    }
+    return;
+  }
   // дальний слой труб
   layer(camx * 0.2, 180, th.far, 0.9, 1);
   layer(camx * 0.45, 260, th.mid, 1, 2);
@@ -1569,7 +1687,19 @@ function drawWorld(L) {
   // враги
   for (const e of L.enemies) if (e.active || e.x < camx + VW + 64) drawEnemy(e, camx);
   // игрок
-  if (G.P && G.state !== 'title') drawHero(G.P, camx);
+  if (G.P && G.state !== 'title') {
+    if (G.P.warp && G.P.warp.clipY !== undefined) {
+      ctx.save(); ctx.beginPath(); ctx.rect(G.P.x - camx - 60, -2000, 160, G.P.warp.clipY + 2000); ctx.clip();
+      drawHero(G.P, camx); ctx.restore();
+    } else drawHero(G.P, camx);
+  }
+  // стрелки над трубами-входами
+  for (const w of L.warps) {
+    const ax = w.tx * T + 32 - camx; if (ax < -40 || ax > VW + 40) continue;
+    const ay = w.ty * T - 22 + Math.sin(G.frame * 0.15) * 4;
+    ctx.fillStyle = '#1a1012'; ctx.beginPath(); ctx.moveTo(ax - 11, ay - 7); ctx.lineTo(ax + 11, ay - 7); ctx.lineTo(ax, ay + 7); ctx.closePath(); ctx.fill();
+    ctx.fillStyle = L.inUnder ? '#7CFC9A' : '#ffd84a'; ctx.beginPath(); ctx.moveTo(ax - 8, ay - 5); ctx.lineTo(ax + 8, ay - 5); ctx.lineTo(ax, ay + 4); ctx.closePath(); ctx.fill();
+  }
   // струи
   for (const j of G.jets) {
     const x = j.x - camx;
@@ -1594,7 +1724,7 @@ function drawWorld(L) {
   // освещение (налобный фонарь)
   if (th.dark > 0 && G.P && G.state !== 'title') {
     const cx = G.P.x + G.P.w / 2 - camx + G.P.face * 30, cy = G.P.y + 6;
-    const rg = ctx.createRadialGradient(cx, cy, 90, cx, cy, 520);
+    const rg = th.under ? ctx.createRadialGradient(cx, cy, 70, cx, cy, 340) : ctx.createRadialGradient(cx, cy, 90, cx, cy, 520);
     rg.addColorStop(0, 'rgba(0,0,0,0)'); rg.addColorStop(1, `rgba(0,0,0,${th.dark})`);
     ctx.fillStyle = rg; ctx.fillRect(0, 0, VW, VH);
   }
@@ -1648,6 +1778,10 @@ function drawTile(c, x, y, tx, ty, th, bump) {
             R(x + cx0 + 1, y + r * 8 + 1, cx1 - cx0 - 2, 1, lit); R(x + cx0 + 1, y + r * 8 + 6, cx1 - cx0 - 2, 1, shd);
           }
         }
+      }
+      if (th.under && !solid(tileAt(tx, ty + 1)) && ty < 13) {
+        // слизь, свисающая с потолка
+        for (let i = 0; i < 3; i++) { const hh = hash(tx * 9 + i); if (hh > 0.45) { const dl = 4 + hh * 10 + Math.sin(G.frame * 0.05 + tx + i) * 2; R(x + 4 + i * 10, y + T - 2, 3, dl, '#4f7a2a'); R(x + 4 + i * 10, y + T - 2 + dl, 3, 2, '#7fb04a'); } }
       }
       if (!solid(above) && above !== '~') {
         R(x, y, T, 4, th.top); R(x, y, T, 1, 'rgba(255,255,255,.6)'); R(x, y + 4, T, 1, 'rgba(0,0,0,.3)');
