@@ -392,7 +392,7 @@ const LEVELS = [
       b.g(48, 70);
       b.row(51, 55, 10, '-'); b.row(51, 55, 9, 'o');
       b.set(59, 13, 'r');
-      b.set(63, 10, 'B'); b.set(64, 10, 'C'); b.set(65, 10, 'B');
+      b.set(63, 10, 'B'); b.set(64, 10, 'C'); b.set(65, 10, 'B'); b.loot(64, 10, 'rapid');
       b.row(67, 70, 7, '='); b.row(67, 70, 6, 'o');
       b.g(74, 102);
       b.set(77, 13, 'F'); b.sign(75, 'Вентиль — точка сохранения', 'Вентиль — точка сохранения', 13);
@@ -403,7 +403,7 @@ const LEVELS = [
       b.set(109, 13, '#'); b.col(110, 12, 13, '#'); b.col(111, 11, 13, '#'); b.col(112, 10, 13, '#');
       b.row(113, 116, 7, 'o');
       b.g(117, 140);
-      b.col(125, 0, 10, '#'); b.col(125, 11, 13, 'C');
+      b.col(125, 0, 10, '#'); b.col(125, 11, 13, 'C'); b.loot(125, 13, 'triple');
       b.set(129, 13, 'h'); b.set(133, 10, 'L');
       b.g(141, 185);
       b.set(142, 13, 'r'); b.set(143, 13, 'F');
@@ -419,7 +419,7 @@ const LEVELS = [
       b.g(0, 40); b.set(3, 13, 'S');
       b.sign(6, 'Волосяные комья прыгают!', 'Волосяные комья прыгают!');
       b.row(9, 12, 11, 'o');
-      b.set(14, 10, 'B'); b.set(15, 10, 'C'); b.set(16, 10, 'P'); b.set(17, 10, 'C'); b.set(18, 10, 'B');
+      b.set(14, 10, 'B'); b.set(15, 10, 'C'); b.set(16, 10, 'P'); b.set(17, 10, 'C'); b.set(18, 10, 'B'); b.loot(17, 10, 'rapid');
       b.set(22, 13, 'h');
       b.pipe(26, 12); b.set(30, 13, 'k'); b.pipe(34, 11); b.row(34, 35, 10, 'o');
       b.g(41, 75); b.row(43, 52, 14, '~');
@@ -435,7 +435,7 @@ const LEVELS = [
       b.g(114, 150); b.row(118, 124, 14, '~'); b.plat(118, 12, 'h', 3); b.row(119, 123, 9, 'o');
       b.set(128, 13, 'h'); b.set(131, 13, 'h');
       b.set(134, 10, 'B'); b.set(135, 10, 'L'); b.set(136, 10, 'B');
-      b.fill(140, 0, 141, 10, '#'); b.fill(140, 11, 141, 13, 'C');
+      b.fill(140, 0, 141, 10, '#'); b.fill(140, 11, 141, 13, 'C'); b.loot(140, 13, 'triple');
       b.set(145, 13, 'k');
       b.g(151, 199);
       b.set(149, 13, 'F');
@@ -459,7 +459,7 @@ const LEVELS = [
       b.pipe(52, 11); b.set(55, 13, 'k'); b.pipe(58, 11);
       b.g(65, 95);
       b.set(67, 13, 'F');
-      b.fill(72, 0, 73, 10, '#'); b.fill(72, 11, 73, 13, 'C');
+      b.fill(72, 0, 73, 10, '#'); b.fill(72, 11, 73, 13, 'C'); b.loot(72, 13, 'triple');
       b.fill(76, 0, 95, 1, '#'); b.set(80, 2, 'd'); b.set(92, 2, 'd');
       b.row(78, 81, 11, '-'); b.row(83, 86, 8, '-'); b.row(83, 86, 7, 'o'); b.set(85, 4, 'L');
       b.set(90, 13, 'h');
@@ -471,7 +471,7 @@ const LEVELS = [
       b.g(144, 205);
       b.set(147, 13, 'F');
       b.fill(146, 0, 168, 1, '#'); b.set(155, 2, 'd'); b.set(163, 2, 'd');
-      b.set(150, 10, 'B'); b.set(151, 10, 'C'); b.set(152, 10, 'B'); b.set(153, 10, 'C');
+      b.set(150, 10, 'B'); b.set(151, 10, 'C'); b.set(152, 10, 'B'); b.set(153, 10, 'C'); b.loot(153, 10, 'rapid');
       b.set(158, 13, 'g'); b.set(164, 13, 'h');
       b.set(166, 13, 'F'); b.set(172, 10, 'L');
       b.sign(171, 'Ржавая пробка таранит!', 'Ржавая пробка таранит!');
@@ -491,7 +491,7 @@ const LEVELS = [
       b.g(38, 64);
       b.row(42, 46, 10, '-'); b.row(42, 46, 9, 'o');
       b.set(48, 13, 'g'); b.set(52, 13, 'r');
-      b.col(57, 0, 10, '#'); b.col(57, 11, 13, 'C');
+      b.col(57, 0, 10, '#'); b.col(57, 11, 13, 'C'); b.loot(57, 13, 'rapid');
       b.set(61, 13, 'h');
       b.g(65, 120); b.row(66, 90, 14, '~');
       b.plat(67, 12, 'h', 4); b.row(68, 72, 9, 'o');
@@ -507,7 +507,7 @@ const LEVELS = [
       b.pipe(127, 12); b.pipe(131, 11); b.pipe(135, 10);
       b.row(138, 142, 8, '='); b.row(138, 142, 7, 'o');
       b.set(145, 13, 'k'); b.set(149, 13, 'r');
-      b.fill(154, 0, 155, 10, '#'); b.fill(154, 11, 155, 13, 'C');
+      b.fill(154, 0, 155, 10, '#'); b.fill(154, 11, 155, 13, 'C'); b.loot(154, 13, 'triple');
       b.g(161, 209);
       b.set(159, 13, 'F'); b.set(162, 10, 'L');
       b.sign(164, 'Ливневый засор! Вызывает дождь', 'Ливневый засор! Вызывает дождь');
@@ -528,7 +528,7 @@ const LEVELS = [
       b.set(38, 13, 'g'); b.set(41, 13, 'k'); b.pipe(45, 11);
       b.g(54, 90);
       b.set(56, 13, 'F');
-      b.fill(60, 0, 61, 10, '#'); b.fill(60, 11, 61, 13, 'C');
+      b.fill(60, 0, 61, 10, '#'); b.fill(60, 11, 61, 13, 'C'); b.loot(60, 13, 'rapid'); b.loot(61, 13, 'triple');
       b.fill(64, 0, 88, 1, '#'); b.set(68, 2, 'd'); b.set(76, 2, 'd'); b.set(84, 2, 'd');
       b.set(66, 13, 'h'); b.set(70, 13, 'r'); b.set(73, 13, 'r');
       b.row(74, 78, 10, '-'); b.row(74, 78, 9, 'o');
@@ -560,7 +560,7 @@ const LEVELS = [
       b.row(39, 44, 11, '-'); b.set(42, 10, 'r');
       b.g(45, 70);
       b.set(47, 13, 'F');
-      b.col(52, 0, 10, '#'); b.col(52, 11, 13, 'C');
+      b.col(52, 0, 10, '#'); b.col(52, 11, 13, 'C'); b.loot(52, 13, 'rapid');
       b.set(56, 13, 'h'); b.set(60, 13, 'h');
       b.pipe(63, 11); b.set(66, 13, 'g'); b.pipe(68, 11);
       b.g(71, 130); b.row(74, 97, 14, '~');
@@ -570,7 +570,7 @@ const LEVELS = [
       b.plat(89, 11, 'h', 4);
       b.set(104, 13, 'r'); b.set(108, 13, 'k'); b.set(111, 13, 'k');
       b.set(113, 10, 'B'); b.set(114, 10, 'B'); b.set(115, 10, 'B');
-      b.fill(120, 0, 121, 10, '#'); b.fill(120, 11, 121, 13, 'C');
+      b.fill(120, 0, 121, 10, '#'); b.fill(120, 11, 121, 13, 'C'); b.loot(120, 13, 'triple');
       b.set(125, 13, 'g');
       b.g(134, 138); b.pipe(135, 12);
       b.g(142, 165);
@@ -633,7 +633,7 @@ function buildLevel(idx) {
   const def = LEVELS[idx], w = def.w, H = ROWS;
   const grid = []; for (let y = 0; y < H; y++) grid.push(new Array(w).fill(' '));
   const plats = [], signs = [];
-  let arena = null;
+  let arena = null; const loot = new Map();
   const b = {
     boss(x1, x2) { arena = { x1, x2 }; b.fill(x2 + 1, 0, x2 + 1, 13, 'Q'); },
     set(x, y, c) { if (x >= 0 && x < w && y >= 0 && y < H) grid[y][x] = c; },
@@ -643,11 +643,12 @@ function buildLevel(idx) {
     g(x1, x2, top = 14) { b.fill(x1, top, x2, H - 1, '#'); },
     pipe(x, top, bot = 13) { b.set(x, top, '['); b.set(x + 1, top, ']'); for (let y = top + 1; y <= bot; y++) { b.set(x, y, '('); b.set(x + 1, y, ')'); } },
     plat(x, y, axis = 'h', range = 4) { plats.push({ sx: x * T, sy: y * T, axis, range: range * T, w: 96, h: 12, x: x * T, y: y * T, dx: 0, dy: 0 }); },
+    loot(x, y, type) { loot.set(x + ',' + y, type); },
     sign(x, kb, touch, y = 13) { signs.push({ x: x * T + 16, y: (y + 1) * T, text: isTouch ? touch : kb }); },
   };
   def.build(b);
   const L = { def, w, grid, plats, signs, nuts: [], enemies: [], drips: [], drops: [], flags: [], exit: null,
-              start: { x: 100, y: 400 }, clogHp: new Map(), bumps: new Map(), boss: null, theme: THEMES[def.theme] };
+              start: { x: 100, y: 400 }, clogHp: new Map(), bumps: new Map(), boss: null, theme: THEMES[def.theme], loot };
   for (let y = 0; y < H; y++) for (let x = 0; x < w; x++) {
     const c = grid[y][x];
     if (c === 'S') { L.start = { x: x * T + 5, y: (y + 1) * T - 30 }; grid[y][x] = ' '; }
@@ -707,7 +708,7 @@ function loadLevel(idx, fromCheckpoint) {
 }
 
 function startGame() {
-  G.score = 0; G.nuts = 0; G.lives = 3; G.power = false; G.cp = null;
+  G.score = 0; G.nuts = 0; G.lives = 3; G.power = false; G.rapid = false; G.triple = false; G.cp = null;
   hidePanel(); lbStart(); hideIosHint();
   loadLevel(0, false);
   setState('intro');
@@ -796,6 +797,14 @@ function damageTile(tx, ty, swing) {
       setTile(tx, ty, ' '); L.clogHp.delete(k);
       particles(cx, cy, 22, ['#5a3b1e', '#3d2a17', '#8a6a3a', '#c9b37a', '#2b211a'], 5, 0.3, 6, 50);
       addScore(50, cx, cy); SFX.breakC(); G.shake = 6;
+      const lt = L.loot.get(k);
+      if (lt) {
+        L.loot.delete(k);
+        G.items.push({ type: lt, x: cx - 12, y: cy - 12, w: 24, h: 24, vy: -6, dir: G.P.x + G.P.w / 2 < cx ? 1 : -1 });
+        particles(cx, cy, 14, ['#ffe066', '#fff3b0', '#9fd4ff'], 4, 0.1, 3, 40); SFX.power();
+      } else if (hash(tx * 7.3 + ty * 3.1 + G.levelIdx * 11) < 0.3) {
+        for (let n = 0; n < 2; n++) { G.items.push({ type: 'nutpop', x: cx + (n ? 8 : -8), y: cy - 6, vy: -7 - n, life: 30 }); addNut(cx, cy); }
+      }
     } else {
       L.clogHp.set(k, hp); L.bumps.set(k, 8);
       particles(cx, cy, 8, ['#5a3b1e', '#8a6a3a'], 3, 0.3, 4, 30); SFX.plop();
@@ -922,9 +931,12 @@ function updatePlay() {
   if (P.shootT > 0) P.shootT--;
   if (pressed.act && P.atkCd <= 0) {
     if (G.power) {
-      if (G.jets.length < 4) {
-        G.jets.push({ x: P.x + (P.face > 0 ? P.w + 6 : -6), y: P.y + 16, vx: P.face * 9.5, life: 55 });
-        P.atkCd = 13; P.shootT = 10; SFX.shoot();
+      const maxJets = (G.triple ? 3 : 1) * (G.rapid ? 6 : 4);
+      if (G.jets.length < maxJets) {
+        const jx = P.x + (P.face > 0 ? P.w + 6 : -6), jy = P.y + 16;
+        if (G.triple) for (const vy of [-1.7, 0, 1.7]) G.jets.push({ x: jx, y: jy, vx: P.face * 9.5, vy, life: 55 });
+        else G.jets.push({ x: jx, y: jy, vx: P.face * 9.5, vy: 0, life: 55 });
+        P.atkCd = G.rapid ? 6 : 13; P.shootT = 10; SFX.shoot();
       }
     } else {
       P.attack = 14; P.atkCd = 20; G.swingId++; P.hitSet = new Set(); SFX.swing();
@@ -1174,12 +1186,17 @@ function updateItems() {
     if (it.rise > 0) { it.y -= 1; it.rise--; continue; }
     it.vy = Math.min(it.vy + GRAV, MAXFALL);
     if (it.dir === undefined) it.dir = P.x + P.w / 2 < it.x + it.w / 2 ? 1 : -1;
-    it.vx = it.dir * 1.4; moveBody(it);
+    it.vx = (it.type === 'rapid' || it.type === 'triple') ? 0 : it.dir * 1.4; moveBody(it);
     if (it.hitWall) it.dir = -it.dir;
     if (it.y > ROWS * T + 50) it.gone = true;
     if (!P.dead && overlap(P, it)) {
       it.gone = true;
       if (it.type === 'gun') { G.power = true; SFX.power(); popText(it.x + 12, it.y - 10, 'ГИДРОМАШИНА!', '#7fd4ff'); addScore(500); }
+      else if (it.type === 'rapid' || it.type === 'triple') {
+        if (!G.power) popText(it.x + 12, it.y - 30, '+ ГИДРОМАШИНА', '#7fd4ff');
+        G.power = true; G[it.type] = true; SFX.power(); addScore(500);
+        popText(it.x + 12, it.y - 10, it.type === 'rapid' ? 'ТУРБО-НАСОС! Стреляет быстрее' : 'ТРОЙНИК! Три струи сразу', '#ffe066');
+      }
       else { P.hp = Math.min(3, P.hp + 1); if (P.hp === 3) addScore(300); SFX.heart(); popText(it.x + 11, it.y - 10, '+♥', '#ff6b81'); }
     }
   }
@@ -1189,7 +1206,7 @@ function updateItems() {
 function updateJets() {
   const L = G.lvl;
   for (const j of G.jets) {
-    j.x += j.vx; j.life--;
+    j.x += j.vx; j.y += j.vy || 0; j.life--;
     if (G.frame % 2 === 0) G.parts.push({ x: j.x, y: j.y, vx: -j.vx * 0.05, vy: Math.random() - 0.5, grav: 0.1, size: 3, color: '#9fd4ff', life: 14, max: 14 });
     const tx = Math.floor(j.x / T), ty = Math.floor(j.y / T), c = tileAt(tx, ty);
     if (solid(c)) {
@@ -1294,7 +1311,7 @@ function killPlayer() {
   const P = G.P;
   if (P.dead) return;
   P.dead = true; P.deathT = 0; P.vy = -10; P.vx = 0; P.hp = 0;
-  G.power = false;
+  G.power = false; G.rapid = false; G.triple = false;
   SFX.die();
   setState('dying');
 }
@@ -1534,6 +1551,7 @@ function drawWorld(L) {
   for (const it of G.items) {
     if (it.type === 'nutpop') drawNut(it.x - camx, it.y, G.frame * 0.4);
     else if (it.type === 'gun') drawGunItem(it.x - camx, it.y);
+    else if (it.type === 'rapid' || it.type === 'triple') drawUpgrade(it.x - camx, it.y, it.type);
     else drawHeart(it.x - camx + 11, it.y + 10, 10, '#ff4d6d');
   }
   // враги
@@ -1713,6 +1731,22 @@ function pipeGrad(px0, pw, th) {
   return g;
 }
 
+function drawUpgrade(x, y, type) {
+  const b = Math.sin(G.frame * 0.15) * 2;
+  ctx.save(); ctx.translate(x + 12, y + 12 + b);
+  ctx.fillStyle = 'rgba(255,224,102,.28)'; ctx.beginPath(); ctx.arc(0, 0, 17 + Math.sin(G.frame * 0.2) * 2, 0, Math.PI * 2); ctx.fill();
+  R(-12, -12, 24, 24, '#1a1012'); R(-11, -11, 22, 22, '#2a6fb0'); R(-11, -11, 22, 3, '#8fd0ff'); R(-11, 8, 22, 3, '#164a78');
+  if (type === 'rapid') {
+    ctx.fillStyle = '#ffe066'; ctx.beginPath();
+    ctx.moveTo(2, -9); ctx.lineTo(-6, 1); ctx.lineTo(-1, 1); ctx.lineTo(-3, 9); ctx.lineTo(6, -2); ctx.lineTo(1, -2); ctx.closePath(); ctx.fill();
+  } else {
+    for (const [dx, dy] of [[-6, 3], [0, -4], [6, 3]]) {
+      ctx.fillStyle = '#d6efff'; ctx.beginPath(); ctx.moveTo(dx, dy - 5); ctx.quadraticCurveTo(dx + 4, dy + 2, dx, dy + 4); ctx.quadraticCurveTo(dx - 4, dy + 2, dx, dy - 5); ctx.fill();
+    }
+  }
+  ctx.restore();
+}
+
 function drawClog(x, y, tx, ty, bump) {
   const hp = G.lvl.clogHp.get(tx + ',' + ty);
   const wob = bump ? Math.sin(bump) * 2 : 0;
@@ -1739,6 +1773,13 @@ function drawClog(x, y, tx, ty, bump) {
   }
   ctx.stroke();
   if (hp === 1) { ctx.strokeStyle = '#e8d8a8'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(-10, -12); ctx.lineTo(-2, -2); ctx.lineTo(-6, 6); ctx.moveTo(-2, -2); ctx.lineTo(8, 2); ctx.stroke(); }
+  if (G.lvl.loot.has(tx + ',' + ty)) {
+    const ph = (G.frame + tx * 17) % 70;
+    if (ph < 16) {
+      const k = Math.sin(ph / 16 * Math.PI), sx = 6 - (tx % 3) * 5, sy = -6 + (ty % 2) * 6;
+      ctx.fillStyle = `rgba(255,240,170,${k})`; R(sx - 1, sy - 5 * k, 2, 10 * k, ctx.fillStyle); R(sx - 5 * k, sy - 1, 10 * k, 2, ctx.fillStyle);
+    }
+  }
   ctx.restore();
 }
 
@@ -2096,7 +2137,12 @@ function drawHUD() {
   ctx.imageSmoothingEnabled = false; ctx.drawImage(HERO_SPR, 0, 0, 22, 18, 124, 8, 22, 18); ctx.imageSmoothingEnabled = true;
   drawNut(170, 20, 0); text('×' + String(G.nuts).padStart(2, '0'), 184, 20, 18, '#ffd84a');
   text('СЧЁТ ' + String(G.score).padStart(6, '0'), 250, 20, 18, '#fff');
-  if (G.power) { drawGunItem(415, 8); text('ВОДА', 445, 20, 14, '#7fd4ff'); }
+  if (G.power) {
+    drawGunItem(415, 8); text('ВОДА', 445, 20, 14, '#7fd4ff');
+    let ux = 490;
+    if (G.rapid) { text('⚡', ux, 20, 16, '#ffe066'); ux += 22; }
+    if (G.triple) { text('×3', ux, 20, 15, '#d6efff'); }
+  }
   const L = G.lvl;
   if (HW >= 800) text(`${G.levelIdx + 1}. ${L.def.name}`, hudRight() - 92, 20, 16, '#f5c518', 'right');
   text('⏱ ' + G.time, hudRight(), 20, 18, G.time < 40 && G.frame % 30 < 15 ? '#ff4d4d' : '#fff', 'right');
