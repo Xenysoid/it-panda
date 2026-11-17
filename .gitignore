@@ -21,3 +21,6 @@
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+
+# plumber game leaderboard data (created on server)
+/public/plumber-game/data

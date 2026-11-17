@@ -29,6 +29,24 @@
   #panel { position:absolute; inset:0; display:none; align-items:center; justify-content:center;
     background:rgba(5,9,14,.72); padding:16px; box-sizing:border-box; }
   #panel.show { display:flex; }
+  #panel { overflow:auto; }
+  .card { max-height:100%; overflow:auto; box-sizing:border-box; }
+  .lb { margin:10px auto 4px; max-width:340px; text-align:left; background:#0e151d; border-radius:10px; padding:8px 14px; }
+  .lb .lbt { text-align:center; color:var(--accent2); font-weight:bold; margin-bottom:4px; }
+  .lb ol { margin:0; padding:0; list-style:none; }
+  .lb li { display:flex; justify-content:space-between; gap:10px; padding:3px 0; font-size:16px; border-bottom:1px solid #1f2a36; }
+  .lb li:last-child { border-bottom:0; }
+  .lb li.me { color:#7CFC9A; font-weight:bold; }
+  .lb .nm { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .lbform { display:flex; gap:8px; justify-content:center; margin:8px 0; flex-wrap:wrap; }
+  .lbform input { font:inherit; font-size:17px; padding:10px 12px; border-radius:10px; border:2px solid #3a4a5a; background:#0e151d; color:var(--text); width:200px; }
+  .lbform input:focus { outline:none; border-color:var(--accent); }
+  .lbmsg { color:#7CFC9A; font-weight:bold; margin:6px 0; }
+  @media (max-height: 520px) {
+    .card { padding:12px 16px; } .card h2 { font-size:22px; } .card p { font-size:14px; margin:4px 0; }
+    .card .score { font-size:17px; margin:4px 0; } .phone { font-size:19px; } .btn { padding:9px 14px; font-size:15px; }
+    .lb li { font-size:14px; padding:1px 0; } .btns { margin-top:8px; }
+  }
   .card { background:var(--panel); border:3px solid var(--accent); border-radius:14px; padding:22px 26px;
     max-width:560px; width:100%; text-align:center; box-shadow:0 10px 40px rgba(0,0,0,.6); }
   .card h2 { margin:0 0 6px; font-size:30px; color:var(--accent2); letter-spacing:1px; }
@@ -54,6 +72,7 @@
   #touch { position:fixed; left:0; right:0; bottom:0; display:none; justify-content:space-between;
     padding:0 calc(14px + env(safe-area-inset-right)) calc(14px + env(safe-area-inset-bottom)) calc(14px + env(safe-area-inset-left)); pointer-events:none; }
   #touch.on { display:flex; }
+  body.panel-open #touch { display:none; }
   #touch .grp { display:flex; gap:12px; pointer-events:auto; }
   .tb { width:68px; height:68px; border-radius:50%; background:rgba(255,255,255,.14); border:2px solid rgba(255,255,255,.35);
     color:#fff; font-size:12px; font-weight:bold; letter-spacing:.5px; display:flex; align-items:center; justify-content:center; touch-action:none; }
@@ -94,6 +113,7 @@ const DEFAULTS = {
   url:     '#',
   cta:     'Вызвать мастера',
   promo:   '',            // например 'ZASOR10' — показывается после победы
+  api:     'leaderboard.php', // общая таблица рекордов (файл на сервере); 'off' — отключить
 };
 const qs = new URLSearchParams(location.search);
 const CONFIG = {};
@@ -134,6 +154,8 @@ const KEYMAP = {
 function kdown(a) { if (!keys[a]) pressed[a] = true; keys[a] = true; }
 function kup(a) { keys[a] = false; }
 addEventListener('keydown', e => {
+  const tg = e.target && e.target.tagName;
+  if (tg === 'INPUT' || tg === 'TEXTAREA') return; // ввод имени в таблицу рекордов
   const a = KEYMAP[e.code]; if (!a) return;
   const ae = document.activeElement;
   if (panel.classList.contains('show') && (a === 'start' || a === 'jump') && ae && (ae.tagName === 'A' || ae.tagName === 'BUTTON')) return;
@@ -484,7 +506,7 @@ function loadLevel(idx, fromCheckpoint) {
 
 function startGame() {
   G.score = 0; G.nuts = 0; G.lives = 3; G.power = false; G.cp = null;
-  hidePanel();
+  hidePanel(); lbStart();
   loadLevel(0, false);
   setState('intro');
 }
@@ -956,19 +978,72 @@ function ctaBlock(lead) {
     <div class="btns">${url}<button class="btn ghost" id="again">Играть снова</button></div>`;
 }
 function bindAgain() { const b = document.getElementById('again'); if (b) { b.onclick = () => { ensureAudio(); startGame(); }; b.focus(); } }
-function showPanel(html) { panel.innerHTML = `<div class="card">${html}</div>`; panel.classList.add('show'); }
-function hidePanel() { panel.classList.remove('show'); panel.innerHTML = ''; }
+function showPanel(html) { panel.innerHTML = `<div class="card">${html}</div>`; panel.classList.add('show'); document.body.classList.add('panel-open'); panel.scrollTop = 0; }
+function hidePanel() { panel.classList.remove('show'); panel.innerHTML = ''; document.body.classList.remove('panel-open'); }
+// ---------- Общая таблица рекордов (через leaderboard.php на сервере сайта)
+const LB = { on: CONFIG.api && CONFIG.api !== 'off', ok: false, top: [], token: null, me: null };
+function lbFetch(opts) {
+  return fetch(CONFIG.api, Object.assign({ cache: 'no-store' }, opts || {})).then(r => r.json().then(d => { if (!r.ok) throw new Error(d && d.error || r.status); return d; }));
+}
+function lbPost(body) { return lbFetch({ method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) }); }
+function lbLoad() {
+  if (!LB.on || location.protocol === 'file:') return;
+  lbFetch().then(d => { if (Array.isArray(d.top)) { LB.top = d.top; LB.ok = true; } }).catch(() => { LB.ok = false; });
+}
+function lbStart() {
+  LB.token = null; LB.me = null;
+  if (!LB.ok) return;
+  lbPost({ action: 'start' }).then(d => { LB.token = d.token || null; }).catch(() => {});
+  lbFetch().then(d => { if (Array.isArray(d.top)) LB.top = d.top; }).catch(() => {});
+}
+function lbQualifies(score) {
+  if (!LB.ok || !LB.token || score <= 0) return false;
+  return LB.top.length < 3 || score > LB.top[Math.min(2, LB.top.length - 1)].score;
+}
+function lbHtml() {
+  if (!LB.ok) return '';
+  const rows = LB.top.slice(0, 3).map((r, i) =>
+    `<li class="${LB.me && LB.me.toLowerCase() === String(r.name).toLowerCase() ? 'me' : ''}"><span class="nm">${['🥇', '🥈', '🥉'][i]} ${esc(r.name)}</span><b>${Number(r.score).toLocaleString('ru')}</b></li>`).join('');
+  return `<div class="lb" id="lbbox"><div class="lbt">Лучшие мастера</div><ol>${rows || '<li><span class="nm">Пока никого — будьте первым!</span></li>'}</ol></div>`;
+}
+function lbFormHtml() {
+  if (!lbQualifies(G.score)) return '';
+  const saved = store('vz_name') || '';
+  return `<p class="lbmsg" id="lbask">Вы попали в тройку лучших! Впишите имя:</p>
+    <form class="lbform" id="lbform"><input id="lbname" maxlength="16" placeholder="Ваше имя" value="${esc(saved)}" required autocomplete="nickname">
+    <button class="btn primary" type="submit">Сохранить</button></form>`;
+}
+function bindLbForm() {
+  const f = document.getElementById('lbform'); if (!f) return;
+  const inp = document.getElementById('lbname');
+  if (!isTouch) setTimeout(() => { try { inp.focus(); } catch (e) {} }, 50);
+  f.onsubmit = ev => {
+    ev.preventDefault();
+    const name = inp.value.trim().slice(0, 16); if (!name) return;
+    store('vz_name', name);
+    const btn = f.querySelector('button'); btn.disabled = true; btn.textContent = '…';
+    lbPost({ action: 'submit', token: LB.token, name, score: G.score, level: G.levelIdx + 1, win: G.state === 'victory' })
+      .then(d => {
+        LB.token = null; LB.me = name; if (Array.isArray(d.top)) LB.top = d.top;
+        const box = document.getElementById('lbbox'); if (box) box.outerHTML = lbHtml();
+        const ask = document.getElementById('lbask'); if (ask) ask.remove();
+        f.outerHTML = `<p class="lbmsg">${d.place ? 'Вы на ' + d.place + '-м месте! 🎉' : 'Результат сохранён!'}</p>`;
+      })
+      .catch(() => { btn.disabled = false; btn.textContent = 'Сохранить'; f.insertAdjacentHTML('afterend', '<p class="muted">Не удалось сохранить, попробуйте ещё раз.</p>'); });
+  };
+}
+function showEnd(title, lead) {
+  showPanel(`<h2>${title}</h2>
+    <div class="score">Счёт: ${G.score.toLocaleString('ru')} · Ваш рекорд: ${G.hi.toLocaleString('ru')}</div>
+    ${lbFormHtml()}${lbHtml()}
+    ${ctaBlock(lead)}`);
+  bindAgain(); bindLbForm();
+}
 function showVictory() {
-  showPanel(`<h2>🏆 Все засоры пробиты!</h2>
-    <div class="score">Счёт: ${G.score.toLocaleString('ru')} · Рекорд: ${G.hi.toLocaleString('ru')}</div>
-    ${ctaBlock('В игре Вантузыч справился сам. А с настоящим засором справятся наши мастера — быстро и без грязи.')}`);
-  bindAgain();
+  showEnd('🏆 Все засоры пробиты!', 'В игре Вантузыч справился сам. А с настоящим засором справятся наши мастера — быстро и без грязи.');
 }
 function showGameOver() {
-  showPanel(`<h2>Засор победил…</h2>
-    <div class="score">Счёт: ${G.score.toLocaleString('ru')} · Рекорд: ${G.hi.toLocaleString('ru')}</div>
-    ${ctaBlock('Не беда! Если засор у вас дома — не мучайтесь, вызовите профессионала.')}`);
-  bindAgain();
+  showEnd('Засор победил…', 'Не беда! Если засор у вас дома — не мучайтесь, вызовите профессионала.');
 }
 function showPause() {
   showPanel(`<h2>Пауза</h2><p class="muted">P / Esc — продолжить</p>
@@ -1511,7 +1586,10 @@ function drawTitle() {
   text(ctrl, VW / 2, 350, 17, '#dfe7ee', 'center');
   text('Пробивай засоры, собирай гайки, доберись до слива!', VW / 2, 378, 17, '#9fb0bf', 'center');
   if (G.frame % 60 < 40) text(isTouch ? 'Коснитесь экрана, чтобы начать' : 'Нажмите ENTER или ПРОБЕЛ', VW / 2, 430, 24, '#fff', 'center');
-  if (G.hi > 0) text('Рекорд: ' + G.hi, VW / 2, 466, 16, '#7CFC9A', 'center');
+  if (LB.ok && LB.top.length) {
+    const line = LB.top.slice(0, 3).map((r, i) => `${i + 1}. ${r.name} — ${Number(r.score).toLocaleString('ru')}`).join('     ');
+    text('🏆 Лучшие мастера:  ' + line, VW / 2, 470, 16, '#7CFC9A', 'center');
+  } else if (G.hi > 0) text('Ваш рекорд: ' + G.hi, VW / 2, 470, 16, '#7CFC9A', 'center');
   text(CONFIG.company + ' · ' + CONFIG.phone, VW / 2, VH - 22, 15, '#9fb0bf', 'center');
   drawHudButtons();
 }
@@ -1520,6 +1598,7 @@ function drawTitle() {
 //  Цикл
 // ============================================================
 G.lvl = buildLevel(0);
+lbLoad();
 let last = performance.now(), acc = 0;
 const STEP = 1000 / 60;
 function loop(now) {
@@ -1531,7 +1610,7 @@ function loop(now) {
 requestAnimationFrame(loop);
 
 // для отладки / автотестов
-window.__vz = { G, LEVELS, buildLevel, loadLevel, startGame, keys, pressed, kdown, kup };
+window.__vz = { G, LB, LEVELS, buildLevel, loadLevel, startGame, keys, pressed, kdown, kup };
 })();
 </script>
 </body>
