@@ -687,16 +687,24 @@ function buildLevel(idx) {
 // ============================================================
 // Ядовитая слизь на потолке подземелий: одна и та же геометрия для отрисовки и столкновений
 function slimeStrands(tx, ty) {
-  const out = [], cap = G.lvl && G.lvl.flood ? 26 : 60;
+  let cap = G.lvl && G.lvl.flood ? 26 : 60;
+  // над приподнятой поверхностью (уступ, труба, полка) сосульки короче — до них нельзя допрыгнуть
+  for (let y = ty + 1; y < ROWS; y++) {
+    const c = tileAt(tx, y);
+    if (solid(c) || c === '-' || c === '=') { cap = Math.min(cap, y * T - 30 - 150 - (ty * T + T - 2) + (y >= 14 ? 8 : 0)); break; }
+  }
+  cap = Math.max(4, cap);
+  const out = [];
   for (let i = 0; i < 3; i++) {
     const hh = hash(tx * 9 + i);
     if (hh <= 0.45) continue;
-    const len = hh > 0.8 ? Math.min(cap, 30 + (hh - 0.8) / 0.2 * 30) : 4 + hh * 10;
+    const len = Math.min(cap, hh > 0.8 ? 30 + (hh - 0.8) / 0.2 * 26 : 4 + hh * 10);
     out.push({ x: tx * T + 4 + i * 10, y: ty * T + T - 2, len, big: hh > 0.8 });
   }
   return out;
 }
-function isCeilingTile(tx, ty) { return solid(tileAt(tx, ty)) && !solid(tileAt(tx, ty + 1)) && tileAt(tx, ty + 1) !== '^' && ty < 13; }
+// слизь висит только на каменном потолке ('#') — там же, где она нарисована
+function isCeilingTile(tx, ty) { return tileAt(tx, ty) === '#' && !solid(tileAt(tx, ty + 1)) && tileAt(tx, ty + 1) !== '^' && ty < 13; }
 function zoneOf(L, x) { return x >= L.underX0 * T ? [L.underX0 * T, L.w * T] : [0, L.mainW * T]; }
 function makeUnderTheme(th) {
   return Object.assign({}, th, { style: 'brick', bg1: '#160c10', bg2: '#040203', far: '#1d1216', mid: '#150d10',
@@ -756,7 +764,7 @@ function buildUnder(b, idx, x0, len) {
     drips(sx) { b.set(sx + 2, 7, 'd'); b.set(sx + 6, 7, 'd'); b.spikes(sx + 4, sx + 4); b.row(sx + 1, sx + 7, 12, 'o'); return 9; },
     shelves(sx) { b.spikes(sx + 1, sx + 8); b.row(sx + 2, sx + 3, 11, '-'); b.row(sx + 6, sx + 7, 11, '-'); b.row(sx + 2, sx + 7, 9, 'o'); return 10; },
     heart(sx) { b.set(sx + 3, 10, 'L'); b.set(sx + 5, 13, foe()); return 7; },
-    climb(sx) { b.fill(sx + 2, 12, sx + 3, 13, '#'); b.fill(sx + 5, 10, sx + 6, 13, '#'); b.set(sx + 8, 13, foe()); b.row(sx + 5, sx + 6, 9, 'o'); return 10; },
+    climb(sx) { b.fill(sx + 2, 12, sx + 3, 13, '#'); b.fill(sx + 5, 11, sx + 6, 13, '#'); b.set(sx + 8, 13, foe()); b.row(sx + 5, sx + 6, 10, 'o'); return 10; },
     ambush(sx) { b.set(sx + 2, 13, foe()); b.set(sx + 4, 13, foe()); b.set(sx + 6, 13, foe()); b.spikes(sx + 8, sx + 8); b.row(sx + 2, sx + 6, 10, 'o'); return 10; },
     lowroof(sx) { b.fill(sx + 1, 7, sx + 8, 9, '#'); b.set(sx + 5, 13, 'r'); b.row(sx + 2, sx + 7, 12, 'o'); return 10; },
   };
@@ -1115,7 +1123,7 @@ function updatePlay() {
         if (!isCeilingTile(tx, ty)) continue;
         for (const st of slimeStrands(tx, ty)) {
           if (P.x + 3 < st.x + 4 && P.x + P.w - 3 > st.x - 1 && P.y < st.y + st.len + 3 && P.y + P.h > st.y) {
-            hurtPlayer(st.x); popText(P.x + P.w / 2, P.y - 18, 'ЯД!', '#8cff3a');
+            hurtPlayer(st.x, 'slime'); popText(P.x + P.w / 2, P.y - 18, 'ЯД!', '#8cff3a');
             particles(st.x, st.y + st.len, 12, ['#8cff3a', '#5fbf2a', '#c8ff9a'], 3, 0.2, 4, 30);
             break outer;
           }
@@ -1131,7 +1139,7 @@ function updatePlay() {
     const ty1 = Math.floor(P.y / T), ty2 = Math.floor((P.y + P.h - 1) / T);
     for (let ty = ty1; ty <= ty2; ty++) for (let tx = lx; tx <= rx; tx++)
       if (tileAt(tx, ty) === '^' && P.x + P.w > tx * T + 4 && P.x < tx * T + T - 4 && P.y + P.h > ty * T + 17) {
-        if (P.inv <= 0) { hurtPlayer(P.x + P.w / 2 - P.face * 10); if (!P.dead) { P.vy = -9; P.y = Math.min(P.y, ty * T + 16 - P.h); } }
+        if (P.inv <= 0) { hurtPlayer(P.x + P.w / 2 - P.face * 10, 'spikes'); if (!P.dead) { P.vy = -9; P.y = Math.min(P.y, ty * T + 16 - P.h); } }
       }
   }
 
@@ -1289,7 +1297,7 @@ function updateBoss() {
       P.vy = keys.jump ? -12 : -9.5; P.coyote = 0; P.y = B.y - P.h - 1;
       SFX.stomp(); hitBoss(B, P.x + P.w / 2 < bcx ? 1 : -1);
     } else if ((B.st === 'walk' && Math.abs(B.vx) > 0.1) || B.st === 'charge' || B.st === 'jumpAir') {
-      hurtPlayer(bcx);
+      hurtPlayer(bcx, 'boss');
       if (!P.dead) P.vx = (pcx < bcx ? -1 : 1) * 6;
     }
   }
@@ -1331,7 +1339,7 @@ function updateBossShots() {
     s.vy = Math.min(s.vy + (s.kind === 'rock' ? 0.3 : 0.35), 10); s.x += s.vx; s.y += s.vy;
     const c = tileAt(Math.floor(s.x / T), Math.floor((s.y + s.r * 0.6) / T));
     if (s.y > 0 && (solid(c) || c === '~')) { s.gone = true; particles(s.x, s.y, 8, ['#5a3b1e', '#3d2a17', '#8a6a3a'], 3, 0.3, 4, 25); }
-    if (!P.dead && s.x > P.x - s.r + 3 && s.x < P.x + P.w + s.r - 3 && s.y > P.y - s.r + 3 && s.y < P.y + P.h + s.r - 3) { s.gone = true; hurtPlayer(s.x); }
+    if (!P.dead && s.x > P.x - s.r + 3 && s.x < P.x + P.w + s.r - 3 && s.y > P.y - s.r + 3 && s.y < P.y + P.h + s.r - 3) { s.gone = true; hurtPlayer(s.x, 'shot'); }
     if (s.y > VH + 40) s.gone = true;
   }
   G.bshots = G.bshots.filter(s => !s.gone);
@@ -1340,7 +1348,7 @@ function updateBossShots() {
     const B = G.lvl.boss;
     if (B && (w.x < B.ax1 || w.x > B.ax2)) w.life = 0;
     if (!solid(tileAt(Math.floor(w.x / T), Math.floor((w.y + 4) / T)))) w.life = 0;
-    if (!P.dead && P.x < w.x + 10 && P.x + P.w > w.x - 10 && P.y + P.h > w.y - 22 && P.y < w.y) hurtPlayer(w.x - w.dir * 20);
+    if (!P.dead && P.x < w.x + 10 && P.x + P.w > w.x - 10 && P.y + P.h > w.y - 22 && P.y < w.y) hurtPlayer(w.x - w.dir * 20, 'wave');
   }
   G.waves = G.waves.filter(w => w.life > 0);
 }
@@ -1448,7 +1456,7 @@ function updateEnemies() {
         e.squash = 30; P.vy = keys.jump ? -11 : -7.5; P.coyote = 0;
         addScore(e.pts, e.x + e.w / 2, e.y); SFX.stomp();
         particles(e.x + e.w / 2, e.y + e.h / 2, 10, enemyColors(e.type), 3, 0.3, 4, 30);
-      } else hurtPlayer(e.x + e.w / 2);
+      } else hurtPlayer(e.x + e.w / 2, 'enemy:' + e.type);
     }
   }
   L.enemies = L.enemies.filter(e => !e.gone);
@@ -1467,7 +1475,7 @@ function updateDrips() {
     dr.vy = Math.min(dr.vy + 0.25, 9); dr.y += dr.vy;
     const c = tileAt(Math.floor(dr.x / T), Math.floor((dr.y + 6) / T));
     if (solid(c) || c === '~' || c === '-') { dr.gone = true; particles(dr.x, dr.y, 6, ['#9fbf3a', '#6f8f2a'], 2, 0.25, 3, 18); }
-    if (!P.dead && dr.x > P.x - 3 && dr.x < P.x + P.w + 3 && dr.y + 6 > P.y && dr.y < P.y + P.h) { dr.gone = true; hurtPlayer(dr.x); }
+    if (!P.dead && dr.x > P.x - 3 && dr.x < P.x + P.w + 3 && dr.y + 6 > P.y && dr.y < P.y + P.h) { dr.gone = true; hurtPlayer(dr.x, 'drop'); }
     if (dr.y > VH + 20) dr.gone = true;
   }
   L.drops = L.drops.filter(d => !d.gone);
@@ -1481,10 +1489,11 @@ function updateParticles() {
   G.pops = G.pops.filter(p => p.life > 0);
 }
 
-function hurtPlayer(fromX) {
+function hurtPlayer(fromX, src) {
   const P = G.P;
   if (P.inv > 0 || P.dead) return;
   P.hp--; P.inv = 100;
+  (G.hurtLog || (G.hurtLog = [])).push({ src: src || '?', x: Math.round(P.x / T), y: Math.round(P.y / T), under: !!(G.lvl && G.lvl.inUnder) }); // для отладки
   P.vx = (P.x + P.w / 2 < fromX ? -1 : 1) * 4; P.vy = -5;
   SFX.fart(); G.shake = 8;
   fartCloud(P);
@@ -1818,9 +1827,19 @@ function drawWorld(L) {
   // освещение (налобный фонарь)
   if (th.dark > 0 && G.P && G.state !== 'title') {
     const cx = G.P.x + G.P.w / 2 - camx + G.P.face * 30, cy = G.P.y + 6;
-    const rg = th.under ? ctx.createRadialGradient(cx, cy, 70, cx, cy, 340) : ctx.createRadialGradient(cx, cy, 90, cx, cy, 520);
+    const rg = th.under ? ctx.createRadialGradient(cx, cy, 110, cx, cy, 430) : ctx.createRadialGradient(cx, cy, 90, cx, cy, 520);
     rg.addColorStop(0, 'rgba(0,0,0,0)'); rg.addColorStop(1, `rgba(0,0,0,${th.dark})`);
     ctx.fillStyle = rg; ctx.fillRect(0, 0, VW, VH);
+    if (th.under) {
+      // в темноте у врагов светятся глаза — их видно и вне луча фонаря
+      for (const e of L.enemies) {
+        if (e.dead || e.gone || e.squash) continue;
+        const ex = e.x - camx; if (ex < -40 || ex > VW + 40) continue;
+        const f = e.vx > 0 ? 1 : -1, eyeX = e.x + e.w / 2 + f * e.w * 0.3 - camx, eyeY = e.y + Math.min(8, e.h * 0.4);
+        ctx.fillStyle = 'rgba(255,70,40,.22)'; ctx.beginPath(); ctx.arc(eyeX, eyeY, 9, 0, Math.PI * 2); ctx.fill();
+        R(eyeX - 3, eyeY - 1, 2, 2, '#ff5a3a'); R(eyeX + 1, eyeY - 1, 2, 2, '#ff5a3a');
+      }
+    }
   }
 }
 
