@@ -595,7 +595,7 @@ const BOSSES = {
 };
 
 const THEMES = {
-  kitchen:  { style:'tile', bg1:'#3a5068', bg2:'#18232e', far:'#2e4256', mid:'#24364a', wall:'#dfe7ee', wall2:'#c7d3dd', grout:'#93a6b6', top:'#ffffff',
+  kitchen:  { style:'block', bg1:'#3a5068', bg2:'#18232e', far:'#2e4256', mid:'#24364a', wall:'#b4bec7', wall2:'#a3adb7', grout:'#56616b', top:'#dfe6ec',
               pipe:'#9aa7b3', pipeHi:'#dde6ee', pipeLo:'#5d6a76', dark:0, liq:['#556b22', '#6f8a2a', '#46591b', '#a2b84a'] },
   bathroom: { style:'tile', bg1:'#2f5d6e', bg2:'#122a33', far:'#2a5262', mid:'#1f4351', wall:'#bfe3ea', wall2:'#a5d3dd', grout:'#6fa7b5', top:'#f2fdff',
               pipe:'#b8c4cc', pipeHi:'#f4f8fb', pipeLo:'#6b7a85', dark:0, liq:['#5f7f8a', '#86aab5', '#4a6a75', '#e6f7ff'] },
@@ -1440,22 +1440,38 @@ function drawBackground(th, camx) {
 function layer(off, seg, col, alpha, seed) {
   ctx.globalAlpha = alpha;
   const i0 = Math.floor(off / seg) - 1, i1 = i0 + Math.ceil(VW / seg) + 2;
+  const hiA = seed === 2 ? 0.1 : 0.06, loA = seed === 2 ? 0.22 : 0.16;
   for (let i = i0; i <= i1; i++) {
     const h1 = hash(i * 7 + seed), h2 = hash(i * 13 + seed * 3), h3 = hash(i * 29 + seed * 5);
     const x = i * seg - off;
-    // вертикальная труба
+    // вертикальная труба с объёмом
     const pw = 22 + h1 * 26, px = x + h2 * (seg - pw);
     R(px, 0, pw, VH, col);
-    R(px - 4, 120 + h3 * 200, pw + 8, 10, col);
-    ctx.fillStyle = 'rgba(255,255,255,.04)'; ctx.fillRect(px + pw * 0.2, 0, pw * 0.15, VH);
+    ctx.fillStyle = `rgba(255,255,255,${hiA})`; ctx.fillRect(px + pw * 0.18, 0, pw * 0.16, VH);
+    ctx.fillStyle = `rgba(0,0,0,${loA})`; ctx.fillRect(px + pw * 0.7, 0, pw * 0.3, VH);
+    for (const fy of [120 + h3 * 200, 420 + h1 * 60]) {
+      R(px - 4, fy, pw + 8, 10, col);
+      ctx.fillStyle = `rgba(255,255,255,${hiA})`; ctx.fillRect(px - 4, fy, pw + 8, 2);
+      ctx.fillStyle = `rgba(0,0,0,${loA})`; ctx.fillRect(px - 4, fy + 8, pw + 8, 2);
+      ctx.fillStyle = `rgba(0,0,0,${loA * 1.4})`; for (let k = 0; k < 3; k++) ctx.fillRect(px + k * pw / 2 - 1, fy + 3, 3, 3);
+    }
     // горизонтальная
     if (h3 > 0.35) {
       const py = 40 + hash(i * 3 + seed) * 300, ph = 14 + h1 * 14;
       R(x, py, seg + 1, ph, col);
+      ctx.fillStyle = `rgba(255,255,255,${hiA})`; ctx.fillRect(x, py + ph * 0.2, seg + 1, ph * 0.18);
+      ctx.fillStyle = `rgba(0,0,0,${loA})`; ctx.fillRect(x, py + ph * 0.72, seg + 1, ph * 0.28);
       R(x + seg * 0.5, py - 3, 8, ph + 6, col);
-      if (h2 > 0.6) { // вентиль
-        ctx.fillStyle = col; ctx.beginPath(); ctx.arc(x + seg * 0.25, py - 12, 12, 0, Math.PI * 2); ctx.fill();
-        R(x + seg * 0.25 - 2, py - 12, 4, 12, col);
+      ctx.fillStyle = `rgba(0,0,0,${loA * 1.4})`; ctx.fillRect(x + seg * 0.5 + 2, py, 3, 3); ctx.fillRect(x + seg * 0.5 + 2, py + ph - 3, 3, 3);
+      if (h2 > 0.55) { // вентиль-штурвал
+        const vx = x + seg * 0.25, vy = py - 16, rot = (seed + i) * 0.7;
+        R(vx - 2, vy, 4, 16, col);
+        ctx.strokeStyle = col; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(vx, vy, 13, 0, Math.PI * 2); ctx.stroke();
+        ctx.lineWidth = 2; ctx.beginPath();
+        for (let k = 0; k < 5; k++) { const a = rot + k * Math.PI * 2 / 5; ctx.moveTo(vx, vy); ctx.lineTo(vx + Math.cos(a) * 12, vy + Math.sin(a) * 12); }
+        ctx.stroke();
+        ctx.fillStyle = col; ctx.beginPath(); ctx.arc(vx, vy, 4, 0, Math.PI * 2); ctx.fill();
+        ctx.strokeStyle = `rgba(255,255,255,${hiA})`; ctx.lineWidth = 1; ctx.beginPath(); ctx.arc(vx, vy, 13, Math.PI, Math.PI * 1.6); ctx.stroke();
       }
     }
   }
@@ -1533,55 +1549,92 @@ function drawWorld(L) {
 function drawTile(c, x, y, tx, ty, th, bump) {
   switch (c) {
     case '#': {
-      const above = tileAt(tx, ty - 1);
+      const above = tileAt(tx, ty - 1), lit = 'rgba(255,255,255,.28)', shd = 'rgba(0,0,0,.28)';
       R(x, y, T, T, th.wall);
       if (th.style === 'tile') {
-        R(x, y, T, 1, th.grout); R(x, y, 1, T, th.grout); R(x + 16, y, 1, T, th.grout); R(x, y + 16, T, 1, th.grout);
-        R(x + 3, y + 3, 5, 2, '#fff'); R(x + 19, y + 19, 5, 2, '#fff');
-      } else if (th.style === 'block') {
-        R(x, y, T, 1, th.grout); R(x, y + 16, T, 1, th.grout);
-        const o = ty % 2 ? 0 : 16; R(x + o, y, 1, 16, th.grout); R(x + (o + 16) % 32, y + 16, 1, 16, th.grout);
-        if (hash(tx * 31 + ty * 7) > 0.7) R(x + 8, y + 22, 3, 3, th.wall2);
-        if (hash(tx * 17 + ty) > 0.8) R(x + 20, y + 6, 4, 2, th.wall2);
-      } else if (th.style === 'earth') {
-        R(x + 4 + hash(tx * 7 + ty) * 16, y + 6 + hash(tx + ty * 5) * 16, 7, 5, th.wall2);
-        R(x + 18 - hash(tx * 3 + ty) * 10, y + 18 + hash(ty * 11 + tx) * 8, 5, 4, th.grout);
-        if (hash(tx * 13 + ty * 17) > 0.6) R(x + 10, y + 12, 9, 6, '#8a7a62');
-      } else {
-        for (let r = 0; r < 4; r++) {
-          R(x, y + r * 8, T, 1, th.grout);
-          const o = r % 2 ? 8 : 0; R(x + o, y + r * 8, 1, 8, th.grout); R(x + o + 16, y + r * 8, 1, 8, th.grout);
+        // кафель 16×16 с фаской
+        for (const [ux, uy] of [[0, 0], [16, 0], [0, 16], [16, 16]]) {
+          R(x + ux, y + uy, 16, 16, th.grout); R(x + ux + 1, y + uy + 1, 14, 14, (ux + uy + tx + ty) % 32 ? th.wall : th.wall2);
+          R(x + ux + 1, y + uy + 1, 14, 2, 'rgba(255,255,255,.55)'); R(x + ux + 1, y + uy + 1, 2, 14, 'rgba(255,255,255,.35)');
+          R(x + ux + 1, y + uy + 13, 14, 2, 'rgba(0,0,0,.14)'); R(x + ux + 13, y + uy + 1, 2, 14, 'rgba(0,0,0,.1)');
         }
-        if (hash(tx * 11 + ty * 3) > 0.6) R(x + 4, y + 10, 6, 5, th.wall2);
+        R(x + 4, y + 4, 4, 2, '#fff');
+      } else if (th.style === 'block') {
+        // каменная кладка 32×16 со смещением и фаской
+        const o = ty % 2 ? 0 : 16;
+        for (const [bx, by, bw] of [[o - 32, 0, 32], [o, 0, 32], [(o + 16) % 32 - 32, 16, 32], [(o + 16) % 32, 16, 32]]) {
+          const cx0 = Math.max(0, bx), cx1 = Math.min(32, bx + bw);
+          if (cx1 <= cx0) continue;
+          const shade = hash(tx * 7 + ty * 13 + bx + by) > 0.5 ? th.wall : th.wall2;
+          R(x + cx0, y + by, cx1 - cx0, 16, th.grout);
+          R(x + cx0 + (bx >= 0 ? 1 : 0), y + by + 1, cx1 - cx0 - (bx >= 0 ? 1 : 0) - (bx + bw <= 32 ? 1 : 0), 14, shade);
+          R(x + cx0 + (bx >= 0 ? 1 : 0), y + by + 1, cx1 - cx0 - 1, 2, lit);
+          if (bx >= 0) R(x + bx + 1, y + by + 1, 2, 14, 'rgba(255,255,255,.16)');
+          R(x + cx0, y + by + 13, cx1 - cx0 - 1, 2, shd);
+          if (bx + bw <= 32) R(x + bx + bw - 3, y + by + 1, 2, 14, 'rgba(0,0,0,.18)');
+        }
+        if (hash(tx * 31 + ty * 7) > 0.7) { R(x + 8, y + 22, 3, 2, 'rgba(0,0,0,.25)'); R(x + 9, y + 21, 2, 1, lit); }
+        if (hash(tx * 17 + ty) > 0.75) R(x + 20, y + 6, 4, 2, 'rgba(0,0,0,.2)');
+      } else if (th.style === 'earth') {
+        R(x, y, T, T, th.wall);
+        for (let i = 0; i < 3; i++) {
+          const sx = x + 2 + hash(tx * 7 + ty + i * 5) * 22, sy = y + 3 + hash(tx + ty * 5 + i * 3) * 22, sw = 5 + hash(i + tx) * 5;
+          R(sx, sy, sw, 4, i ? th.wall2 : '#8a7a62'); R(sx, sy, sw, 1, 'rgba(255,255,255,.25)'); R(sx, sy + 3, sw, 1, 'rgba(0,0,0,.3)');
+        }
+        R(x + 18 - hash(tx * 3 + ty) * 10, y + 18 + hash(ty * 11 + tx) * 8, 2, 2, th.grout);
+      } else {
+        // кирпич 16×8 с фаской
+        for (let r = 0; r < 4; r++) {
+          const o = r % 2 ? 8 : 0;
+          for (let k = -1; k < 2; k++) {
+            const bx = o + k * 16, cx0 = Math.max(0, bx), cx1 = Math.min(32, bx + 16);
+            if (cx1 <= cx0) continue;
+            R(x + cx0, y + r * 8, cx1 - cx0, 8, th.grout);
+            R(x + cx0 + (bx >= 0 ? 1 : 0), y + r * 8 + 1, cx1 - cx0 - 1, 6, hash(tx * 5 + ty * 3 + r * 7 + k) > 0.5 ? th.wall : th.wall2);
+            R(x + cx0 + 1, y + r * 8 + 1, cx1 - cx0 - 2, 1, lit); R(x + cx0 + 1, y + r * 8 + 6, cx1 - cx0 - 2, 1, shd);
+          }
+        }
       }
       if (!solid(above) && above !== '~') {
-        R(x, y, T, 4, th.top);
+        R(x, y, T, 4, th.top); R(x, y, T, 1, 'rgba(255,255,255,.6)'); R(x, y + 4, T, 1, 'rgba(0,0,0,.3)');
         if (th.style === 'brick' || th.style === 'earth') { for (let i = 0; i < 4; i++) if (hash(tx * 4 + i) > 0.4) R(x + i * 8 + 2, y + 4, 4, 3 + hash(tx + i * 9) * 6, th.top); }
-        else R(x, y + 4, T, 2, 'rgba(0,0,0,.18)');
       }
       break;
     }
     case '[': case ']': {
-      const L = c === '[';
-      R(x + (L ? -3 : 0), y, T + 3, T, th.pipe);
-      R(x + (L ? -3 : 0), y, T + 3, 4, th.pipeHi);
-      R(x + (L ? -3 : 0), y + T - 4, T + 3, 4, th.pipeLo);
-      if (L) { R(x - 3, y, 4, T, th.pipeLo); R(x + 6, y + 4, 6, T - 8, th.pipeHi); R(x + 4, y + 13, 4, 4, th.pipeLo); }
-      else { R(x + T - 1, y, 4, T, th.pipeLo); R(x + 16, y + 4, 8, T - 8, th.pipeLo); R(x + 22, y + 13, 4, 4, th.pipeHi); }
-      R(x + (L ? 8 : 0), y + 1, L ? 24 : 24, 3, 'rgba(0,0,0,.45)');
+      // оголовок трубы: шире тела, объёмный, с болтами
+      const L = c === '[', px0 = L ? x - 4 : x - 32 - 4, pw = 72;
+      const g = pipeGrad(px0, pw, th);
+      ctx.fillStyle = g;
+      const cx0 = L ? x - 4 : x, cw = L ? T + 4 : T + 4;
+      R(cx0, y, cw, T - 2, '#000'); ctx.fillStyle = g; ctx.fillRect(cx0 + (L ? 2 : 0), y + 2, cw - 2, T - 6);
+      R(cx0, y + 2, cw, 2, 'rgba(255,255,255,.35)');
+      R(cx0, y + T - 6, cw, 3, 'rgba(0,0,0,.35)');
+      // тёмное отверстие сверху
+      R(L ? x + 4 : x, y + 2, L ? T - 4 : T - 4, 3, 'rgba(0,0,0,.55)');
+      // болты
+      for (const bx of L ? [x + 4, x + 20] : [x + 6, x + 22]) { R(bx, y + 11, 5, 5, th.pipeLo); R(bx + 1, y + 12, 2, 2, th.pipeHi); R(bx + 3, y + 14, 2, 2, 'rgba(0,0,0,.5)'); }
       break;
     }
     case '(': case ')': {
       const L = c === '(';
-      R(x, y, T, T, th.pipe);
-      if (L) { R(x, y, 4, T, th.pipeLo); R(x + 8, y, 6, T, th.pipeHi); }
-      else { R(x + T - 4, y, 4, T, th.pipeLo); R(x + 14, y, 10, T, 'rgba(0,0,0,.18)'); }
-      if (hash(tx * 13 + ty * 5) > 0.75) R(x + (L ? 18 : 6), y + 10, 5, 7, '#9a5a2a');
+      const px0 = L ? x : x - 32;
+      ctx.fillStyle = pipeGrad(px0, 64, th);
+      ctx.fillRect(x, y, T, T);
+      if (L) R(x, y, 2, T, '#000'); else R(x + T - 2, y, 2, T, '#000');
+      if (hash(tx * 13 + ty * 5) > 0.78) { R(x + (L ? 18 : 6), y + 10, 5, 7, 'rgba(154,90,42,.75)'); R(x + (L ? 19 : 7), y + 16, 3, 4, 'rgba(154,90,42,.5)'); }
       break;
     }
     case '=': {
-      R(x, y + 2, T, T - 4, th.pipe); R(x, y + 2, T, 3, th.pipeLo); R(x, y + 7, T, 5, th.pipeHi); R(x, y + T - 7, T, 5, th.pipeLo);
-      if (tx % 3 === 0) { R(x, y, 6, T, th.pipeLo); R(x + 1, y + 1, 4, T - 2, th.pipe); R(x + 2, y + 5, 2, 2, th.pipeHi); R(x + 2, y + T - 7, 2, 2, th.pipeHi); }
+      const g = ctx.createLinearGradient(0, y, 0, y + T);
+      g.addColorStop(0, th.pipeLo); g.addColorStop(0.12, th.pipe); g.addColorStop(0.3, th.pipeHi); g.addColorStop(0.5, th.pipe); g.addColorStop(0.88, th.pipeLo); g.addColorStop(1, '#000');
+      R(x, y + 1, T, T - 2, '#000'); ctx.fillStyle = g; ctx.fillRect(x, y + 3, T, T - 6);
+      if (tx % 3 === 0) {
+        // фланец с болтами
+        ctx.fillStyle = g; R(x - 1, y - 1, 9, T + 2, '#000'); ctx.fillRect(x, y, 7, T);
+        R(x, y, 7, 2, 'rgba(255,255,255,.35)');
+        for (const by of [y + 4, y + T - 9]) { R(x + 2, by, 4, 4, th.pipeLo); R(x + 2, by, 2, 2, th.pipeHi); }
+      }
       break;
     }
     case '-': {
@@ -1625,6 +1678,15 @@ function drawTile(c, x, y, tx, ty, th, bump) {
       break;
     }
   }
+}
+
+const _pipeGradCache = new Map();
+function pipeGrad(px0, pw, th) {
+  // горизонтальный «цилиндрический» градиент для вертикальной трубы
+  const g = ctx.createLinearGradient(px0, 0, px0 + pw, 0);
+  g.addColorStop(0, th.pipeLo); g.addColorStop(0.1, th.pipe); g.addColorStop(0.24, th.pipeHi); g.addColorStop(0.34, th.pipeHi);
+  g.addColorStop(0.5, th.pipe); g.addColorStop(0.85, th.pipeLo); g.addColorStop(1, '#141a20');
+  return g;
 }
 
 function drawClog(x, y, tx, ty, bump) {
@@ -1761,8 +1823,11 @@ function drawBossShot(x, y, s) {
 function drawSign(x, y, s) {
   ctx.font = 'bold 13px "Trebuchet MS",Arial,sans-serif';
   const w = Math.max(60, ctx.measureText(s).width + 16);
-  R(x - 2, y - 40, 4, 40, '#5a3a1a');
-  R(x - w / 2, y - 66, w, 28, '#3b2a18'); R(x - w / 2 + 2, y - 64, w - 4, 24, '#d9b77a');
+  R(x - 3, y - 40, 6, 40, '#2a1a0c'); R(x - 2, y - 40, 4, 40, '#6a4422'); R(x - 2, y - 40, 1, 40, '#8a5c32');
+  R(x - w / 2 - 1, y - 67, w + 2, 30, '#1e140a'); R(x - w / 2 + 1, y - 65, w - 2, 26, '#7a5228');
+  R(x - w / 2 + 3, y - 63, w - 6, 22, '#e2c48a'); R(x - w / 2 + 3, y - 63, w - 6, 2, '#f4dca6'); R(x - w / 2 + 3, y - 52, w - 6, 1, 'rgba(120,80,30,.25)');
+  R(x - w / 2 + 3, y - 43, w - 6, 2, '#b8955a');
+  for (const nx of [x - w / 2 + 5, x + w / 2 - 8]) { R(nx, y - 61, 3, 3, '#5a3a1a'); R(nx, y - 46, 3, 3, '#5a3a1a'); }
   text(s, x, y - 52, 13, '#3b2a18', 'center', false);
 }
 
@@ -1909,46 +1974,92 @@ function drawEnemy(e, camx) {
   ctx.restore();
 }
 
+// ---------- Спрайт героя (пиксель-арт): волосы, синие очки, усы, тёмный рабочий костюм с красными вставками
+const HERO_PAL = {
+  K: '#1a1012', H: '#4a2e1f', h: '#7a4f35', S: '#f2b57e', s: '#d98e55', G: '#1e2a6e', W: '#ffffff', E: '#111111',
+  M: '#5a3420', m: '#a0583a', D: '#3a3a48', d: '#50505f', l: '#6c6c80', R: '#d81e2c', r: '#a5121e',
+};
+const HERO_ROWS = [
+  '......KKKKKKK.........',
+  '....KKHHhHHhHKK.......',
+  '...KHHhHHhHHhHHK......',
+  '..KHHHHhHHHHHhHHK.....',
+  '..KHHhHHHHHhHHHHK.....',
+  '..KHHHHHSSSSSSHHK.....',
+  '..KHHHSSSSSSSSSSK.....',
+  '..KHHSSKKKSSKKKSK.....',
+  '..KHsSGGGGGGGGGGGGK...',
+  '..KSsSGWWEGSGWWEGK....',
+  '..KSsSGWWEGSGWWEGK....',
+  '..KSSSGGGGGsGGGGGK....',
+  '..KSSSSSSSSsSSSSK.....',
+  '...KSSSMMMMMMMSSK.....',
+  '...KSSSSSmmmSSSK......',
+  '....KKSSSSSSSKK.......',
+  '....KDDKSSSSKDDK......',
+  '..KKDDRRRSSRRRDDKK....',
+  '.KlDRRRRRrRRRRRRDDK...',
+  '.KlDRRRRRDRRRRRrDDK...',
+  '.KlDDDDDDdDDDDDDdDK...',
+  '.KdDDRRRDdDRRRDDdDK...',
+  '.KdDDDDDDdDDDDDDdDK...',
+  '.KSSDDDDDdDDDDDDSSK...',
+  '.KSsKKKKKKKKKKKKSsK...',
+];
+function makeSprite(rows, pal, override) {
+  const c = document.createElement('canvas'); c.width = rows[0].length; c.height = rows.length;
+  const g = c.getContext('2d');
+  rows.forEach((row, y) => [...row].forEach((ch, x) => { const col = (override && override[ch]) || pal[ch]; if (col) { g.fillStyle = col; g.fillRect(x, y, 1, 1); } }));
+  return c;
+}
+const HERO_SPR = makeSprite(HERO_ROWS, HERO_PAL);
+const HERO_SPR_DEAD = makeSprite(HERO_ROWS.map((r, i) => i === 9 || i === 10 ? r.replace(/WWE/g, i === 9 ? 'EWE' : 'WEW') : r), HERO_PAL);
+
+function heroLeg(x0, off, lift) {
+  const y0 = 21 - lift;
+  R(x0 - 1, y0, 8, 7, '#1a1012'); R(x0, y0, 6, 6, '#3a3a48'); R(x0, y0, 2, 6, '#50505f');
+  R(x0 + 2, y0 + 2, 3, 2, '#d81e2c');
+  R(x0 - 1 + off, 26 - lift, 9, 4, '#1a1012'); R(x0 + off, 26 - lift, 7, 3, '#2a2a30'); R(x0 + 1 + off, 26 - lift, 3, 1, '#7a7a86');
+}
+
 function drawHero(P, camx) {
   if (P.inv > 0 && !P.dead && Math.floor(P.inv / 4) % 2 === 0) return;
   const x = Math.round(P.x - camx), y = Math.round(P.y);
   ctx.save();
+  ctx.imageSmoothingEnabled = false;
   ctx.translate(x + P.w / 2, y);
   if (P.dead) { ctx.translate(0, 15); ctx.rotate(Math.min(P.deathT, 25) / 25 * Math.PI); ctx.translate(0, -15); }
   ctx.scale(P.face, 1); ctx.translate(-P.w / 2, 0);
   const run = P.onGround && Math.abs(P.vx) > 0.5, air = !P.onGround && !P.dead;
   const ph = run ? Math.floor(P.anim / 1.6) % 4 : 0;
-  let l1 = 0, l2 = 0; if (run) { l1 = [0, -2, 0, 2][ph]; l2 = -l1; } if (air) { l1 = -2; l2 = 3; }
   const bob = run && ph % 2 ? -1 : 0;
-  // бак гидромашины
-  if (G.power) { R(-5, 13 + bob, 7, 12, '#1f6fb8'); R(-5, 13 + bob, 7, 3, '#8fd0ff'); R(-3, 25 + bob, 3, 3, '#14476f'); }
-  // ноги
-  R(4 + l1, 23, 6, 5, '#2b3a67'); R(12 + l2, 23, 6, 5, '#2b3a67');
-  R(3 + l1, 27, 8, 3, '#1b1b1b'); R(11 + l2, 27, 8, 3, '#1b1b1b');
+  // бак гидромашины на спине
+  if (G.power) { R(-6, 9 + bob, 9, 14, '#0e2a44'); R(-5, 10 + bob, 7, 12, '#1f6fb8'); R(-5, 10 + bob, 7, 3, '#8fd0ff'); R(-3, 22 + bob, 3, 3, '#14476f'); }
+  // ноги (анимация)
+  if (air) { heroLeg(4, -1, 2); heroLeg(11, 1, 0); }
+  else if (run) { const a = [0, 2, 0, -2][ph]; heroLeg(4, a, ph === 1 ? 1 : 0); heroLeg(11, -a, ph === 3 ? 1 : 0); }
+  else { heroLeg(4, -1, 0); heroLeg(11, 1, 0); }
+  // туловище и голова
+  ctx.drawImage(P.dead ? HERO_SPR_DEAD : HERO_SPR, 0, -4 + bob);
   ctx.translate(0, bob);
-  // тело — оранжевый комбинезон
-  R(3, 13, 16, 11, '#ff7a1a'); R(3, 13, 16, 2, '#e0600d'); R(3, 18, 16, 2, '#e8f4ff'); R(5, 21, 4, 3, '#e0600d');
-  // голова
-  R(4, 6, 14, 8, '#f1c27d'); R(5, 12, 11, 2, '#6b4a2e'); R(4, 9, 2, 4, '#6b4a2e');
-  if (P.dead) { R(13, 8, 3, 1, '#222'); R(14, 7, 1, 3, '#222'); } else R(14, 8, 2, 3, '#222');
-  R(17, 10, 2, 2, '#e0a868'); R(12, 12, 4, 1, '#3a2010');
-  // каска с фонарём
-  R(3, 0, 16, 6, '#f5c518'); R(5, 0, 12, 2, '#fde68a'); R(1, 5, 21, 2, '#d9a400'); R(15, 2, 4, 3, '#fffbd0');
-  if (G.lvl && G.lvl.theme.dark > 0 && !P.dead) { ctx.fillStyle = 'rgba(255,250,200,.12)'; ctx.beginPath(); ctx.moveTo(19, 3); ctx.lineTo(70, -12); ctx.lineTo(70, 24); ctx.closePath(); ctx.fill(); }
+  if (G.lvl && G.lvl.theme.dark > 0 && !P.dead) { ctx.fillStyle = 'rgba(255,250,200,.10)'; ctx.beginPath(); ctx.moveTo(18, 4); ctx.lineTo(75, -14); ctx.lineTo(75, 26); ctx.closePath(); ctx.fill(); }
   // руки и вантуз
   if (P.attack > 0) {
     const e = P.attack > 9 ? (14 - P.attack) / 5 : P.attack > 4 ? 1 : P.attack / 4;
     const len = 6 + e * 16;
-    R(12, 15, 7, 4, '#e0600d'); R(18, 15, 3, 4, '#f1c27d');
-    R(19, 16, len, 2, '#a0682a');
-    const cx = 19 + len;
-    R(cx, 10, 5, 12, '#d62828'); R(cx + 4, 11, 2, 10, '#9e1b1b'); R(cx, 10, 2, 12, '#ff5a5a');
+    R(12, 11, 9, 6, '#1a1012'); R(13, 12, 7, 4, '#3a3a48'); R(13, 12, 7, 1, '#6c6c80');
+    R(20, 11, 4, 6, '#1a1012'); R(20, 12, 3, 4, '#f2b57e');
+    R(23, 13, len, 3, '#4a2a12'); R(23, 13, len, 1, '#c08850');
+    const cx = 23 + len;
+    R(cx - 1, 7, 8, 14, '#1a1012'); R(cx, 8, 5, 12, '#d62828'); R(cx + 4, 9, 2, 10, '#9e1b1b'); R(cx, 8, 2, 12, '#ff6a6a');
   } else if (G.power && P.shootT > 0) {
-    R(12, 15, 7, 4, '#e0600d'); R(18, 15, 3, 4, '#f1c27d'); R(19, 14, 9, 5, '#59636d'); R(27, 13, 3, 7, '#4fa3ff');
+    R(12, 11, 9, 6, '#1a1012'); R(13, 12, 7, 4, '#3a3a48'); R(20, 12, 3, 4, '#f2b57e');
+    R(21, 10, 10, 7, '#1a1012'); R(22, 11, 8, 5, '#59636d'); R(22, 11, 8, 1, '#a9b4be'); R(29, 10, 3, 7, '#4fa3ff');
   } else {
-    R(16, 10, 2, 17, '#a0682a');
-    R(13, 26, 8, 4, '#d62828'); R(13, 26, 8, 1, '#ff5a5a');
-    R(10, 15, 5, 6, '#e0600d'); R(14, 18, 4, 3, '#f1c27d');
+    // вантуз стоит у руки, как трость
+    R(18, 4, 3, 22, '#1a1012'); R(19, 5, 1, 20, '#c08850'); R(18, 5, 1, 20, '#7a4a22');
+    R(14, 24, 10, 6, '#1a1012'); R(15, 25, 8, 4, '#d62828'); R(15, 25, 8, 1, '#ff6a6a'); R(21, 25, 2, 4, '#9e1b1b');
+    R(16, 18, 5, 4, '#1a1012'); R(17, 18, 3, 3, '#f2b57e');
   }
   ctx.restore();
 }
@@ -1958,7 +2069,7 @@ function drawHUD() {
   for (let i = 0; i < 3; i++) drawHeart(22 + i * 26, 20, 9, i < (G.P ? G.P.hp : 0) ? '#ff4d6d' : 'rgba(255,255,255,.2)');
   text('×' + G.lives, 100, 20, 18, '#fff');
   // мини-вантузыч
-  R(130, 11, 10, 4, '#f5c518'); R(131, 15, 8, 6, '#f1c27d'); R(130, 21, 10, 7, '#ff7a1a');
+  ctx.imageSmoothingEnabled = false; ctx.drawImage(HERO_SPR, 0, 0, 22, 18, 124, 8, 22, 18); ctx.imageSmoothingEnabled = true;
   drawNut(170, 20, 0); text('×' + String(G.nuts).padStart(2, '0'), 184, 20, 18, '#ffd84a');
   text('СЧЁТ ' + String(G.score).padStart(6, '0'), 250, 20, 18, '#fff');
   if (G.power) { drawGunItem(415, 8); text('ВОДА', 445, 20, 14, '#7fd4ff'); }
@@ -2055,7 +2166,7 @@ function loop(now) {
 requestAnimationFrame(loop);
 
 // для отладки / автотестов
-window.__vz = { G, LB, hitBoss, LEVELS, buildLevel, loadLevel, startGame, keys, pressed, kdown, kup };
+window.__vz = { G, LB, hitBoss, HERO_SPR, LEVELS, buildLevel, loadLevel, startGame, keys, pressed, kdown, kup };
 })();
 </script>
 </body>
