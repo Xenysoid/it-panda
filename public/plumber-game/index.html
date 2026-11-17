@@ -8,6 +8,9 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Вантузыч">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-180.png">
 <title>Вантузыч: Битва с засорами</title>
 <meta name="description" content="Браузерная игра-платформер про сантехника, который прочищает трубы и побеждает засоры.">
 <!--
@@ -63,6 +66,12 @@
   .btn.ghost { background:transparent; color:var(--text); border:2px solid #3a4a5a; }
   .btn.ghost:hover { border-color:var(--muted); }
   .phone { font-size:24px; font-weight:bold; color:var(--text); text-decoration:none; display:block; margin-top:6px; }
+  #iosHint { position:fixed; left:50%; top:calc(8px + env(safe-area-inset-top)); transform:translateX(-50%); z-index:5; display:none;
+    background:rgba(20,28,37,.94); border:2px solid var(--accent); border-radius:12px; padding:8px 12px 8px 14px; font-size:14px;
+    color:var(--text); max-width:calc(100% - 140px); box-sizing:border-box; align-items:center; gap:10px; }
+  #iosHint.on { display:flex; }
+  #iosHint a { color:var(--accent2); font-weight:bold; }
+  #iosHint button { background:none; border:0; color:var(--muted); font-size:20px; cursor:pointer; padding:0 2px; }
   #rotate { position:fixed; inset:0; display:none; z-index:10; background:#0b1016; color:#eef3f8; text-align:center;
     flex-direction:column; align-items:center; justify-content:center; padding:24px; box-sizing:border-box; font-size:20px; }
   #rotate .ico { font-size:64px; animation: rot 2s ease-in-out infinite; margin-bottom:16px; }
@@ -88,6 +97,7 @@
     <div id="panel" role="dialog" aria-live="polite"></div>
   </div>
 </div>
+<div id="iosHint" role="note"><span id="iosHintText"></span><button id="iosHintX" aria-label="Закрыть">×</button></div>
 <div id="rotate"><div class="ico">📱</div><b>Поверните телефон горизонтально</b><small>Так играть гораздо удобнее</small></div>
 <div id="touch">
   <div class="grp">
@@ -166,6 +176,22 @@ addEventListener('blur', () => { for (const k in keys) keys[k] = false; if (G.st
 document.addEventListener('visibilitychange', () => { if (document.hidden && G.state === 'play') setPause(true); });
 
 if (isTouch) { document.getElementById('touch').classList.add('on'); document.body.classList.add('touch'); }
+
+// ---------- Подсказка для iPhone: полный экран возможен только через «На экран Домой»
+const isIOS = /iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+const isStandalone = navigator.standalone === true || matchMedia('(display-mode: standalone)').matches || matchMedia('(display-mode: fullscreen)').matches;
+let inFrame = false; try { inFrame = window.self !== window.top; } catch (e) { inFrame = true; }
+const iosHint = document.getElementById('iosHint');
+function showIosHint() {
+  if (!isIOS || isStandalone || store('vz_ioshint') === '0') return;
+  document.getElementById('iosHintText').innerHTML = inFrame
+    ? 'На весь экран: <a href="' + location.href.replace(/"/g, '&quot;') + '" target="_blank" rel="noopener">откройте игру отдельно</a>, затем «Поделиться» → «На экран Домой»'
+    : 'На весь экран: нажмите «Поделиться» → «На экран Домой» и запускайте игру с иконки';
+  iosHint.classList.add('on');
+}
+function hideIosHint() { iosHint.classList.remove('on'); }
+document.getElementById('iosHintX').onclick = e => { e.stopPropagation(); store('vz_ioshint', '0'); hideIosHint(); };
+showIosHint();
 
 // ---------- Полноэкранный режим
 const fsEl = document.documentElement;
@@ -506,7 +532,7 @@ function loadLevel(idx, fromCheckpoint) {
 
 function startGame() {
   G.score = 0; G.nuts = 0; G.lives = 3; G.power = false; G.cp = null;
-  hidePanel(); lbStart();
+  hidePanel(); lbStart(); hideIosHint();
   loadLevel(0, false);
   setState('intro');
 }
