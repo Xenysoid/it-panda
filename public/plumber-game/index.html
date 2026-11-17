@@ -103,10 +103,10 @@
 <div id="touch">
   <div class="grp">
     <div class="tb" data-k="left">◀</div>
-    <div class="tb sm" data-k="down">▼</div>
     <div class="tb" data-k="right">▶</div>
   </div>
   <div class="grp">
+    <div class="tb sm" data-k="down">▼</div>
     <div class="tb act" data-k="act">ВАНТУЗ</div>
     <div class="tb jmp" data-k="jump">ПРЫЖОК</div>
   </div>
@@ -638,7 +638,7 @@ const ENEMY_DEF = {
 
 function buildLevel(idx) {
   const def = LEVELS[idx], H = ROWS;
-  const UNDER_LEN = 86, underX0 = def.w + 1, w = def.w + 1 + UNDER_LEN;
+  const UNDER_LEN = 172, underX0 = def.w + 1, w = def.w + 1 + UNDER_LEN;
   const grid = []; for (let y = 0; y < H; y++) grid.push(new Array(w).fill(' '));
   const plats = [], signs = [];
   let arena = null; const loot = new Map(); const warpMarks = { in: null, out: null };
@@ -685,34 +685,54 @@ function buildLevel(idx) {
 // ============================================================
 //  Нижний путь: тёмный подземный тоннель (генерируется из «кусков»)
 // ============================================================
+// Ядовитая слизь на потолке подземелий: одна и та же геометрия для отрисовки и столкновений
+function slimeStrands(tx, ty) {
+  const out = [], cap = G.lvl && G.lvl.flood ? 26 : 60;
+  for (let i = 0; i < 3; i++) {
+    const hh = hash(tx * 9 + i);
+    if (hh <= 0.45) continue;
+    const len = hh > 0.8 ? Math.min(cap, 30 + (hh - 0.8) / 0.2 * 30) : 4 + hh * 10;
+    out.push({ x: tx * T + 4 + i * 10, y: ty * T + T - 2, len, big: hh > 0.8 });
+  }
+  return out;
+}
+function isCeilingTile(tx, ty) { return solid(tileAt(tx, ty)) && !solid(tileAt(tx, ty + 1)) && tileAt(tx, ty + 1) !== '^' && ty < 13; }
 function zoneOf(L, x) { return x >= L.underX0 * T ? [L.underX0 * T, L.w * T] : [0, L.mainW * T]; }
 function makeUnderTheme(th) {
   return Object.assign({}, th, { style: 'brick', bg1: '#160c10', bg2: '#040203', far: '#1d1216', mid: '#150d10',
     wall: '#3b2a29', wall2: '#2f2120', grout: '#120a0a', top: '#3f6a2a', pipe: '#4e5f56', pipeHi: '#7f9286', pipeLo: '#232b27',
     dark: 0.86, rain: false, under: true });
 }
-// Уникальное подземелье «Септика»: поднимающаяся жижа, надо карабкаться вверх к выходу под потолком
+// Уникальное подземелье «Септика»: поднимающаяся жижа; три яруса — низ, середина, верх
 function buildFloodUnder(b, x0, len) {
   const xe = x0 + len - 1;
   b.fill(x0, 0, xe, 1, '#'); b.g(x0, xe); b.fill(x0, 2, x0, 13, '#'); b.fill(xe, 2, xe, 13, '#');
   const arrive = x0 + 2; b.pipe(arrive, 12);
   b.sign(x0 + 8, 'ЖИЖА ПОДНИМАЕТСЯ! Беги наверх!', 'ЖИЖА ПОДНИМАЕТСЯ! Беги наверх!');
-  // разбег по низу
+  // низ: разбег
   b.row(x0 + 10, x0 + 14, 11, 'o');
   b.spikes(x0 + 12, x0 + 13); b.set(x0 + 16, 13, 'r');
   b.fill(x0 + 20, 14, x0 + 22, 16, ' '); b.row(x0 + 20, x0 + 22, 10, 'o'); b.set(x0 + 21, 2, 'd');
   b.set(x0 + 26, 13, 'h');
   b.col(x0 + 29, 2, 9, '#'); b.col(x0 + 29, 10, 13, 'C'); b.loot(x0 + 29, 13, 'triple');
-  // подъём
-  b.fill(x0 + 33, 12, x0 + 36, 13, '#'); b.set(x0 + 35, 11, 'k');
-  b.fill(x0 + 39, 10, x0 + 41, 13, '#'); b.row(x0 + 39, x0 + 41, 9, 'o');
-  b.row(x0 + 44, x0 + 46, 8, '-'); b.row(x0 + 44, x0 + 46, 7, 'o');
-  b.fill(x0 + 49, 7, x0 + 51, 13, '#'); b.set(x0 + 50, 6, 'o');
-  b.plat(x0 + 53, 7, 'v', 3);
-  b.row(x0 + 57, x0 + 64, 5, '='); b.row(x0 + 57, x0 + 59, 4, 'o'); b.set(x0 + 61, 4, 'k'); b.set(x0 + 60, 2, 'L');
-  // высокий уступ с выходом
-  b.fill(x0 + 67, 6, x0 + 76, 13, '#');
-  const leave = x0 + 71; b.pipe(leave, 4, 5);
+  b.spikes(x0 + 32, x0 + 33);
+  // середина
+  b.fill(x0 + 36, 12, x0 + 38, 13, '#');
+  b.fill(x0 + 40, 10, x0 + 48, 13, '#'); b.set(x0 + 44, 9, 'k'); b.row(x0 + 41, x0 + 47, 8, 'o');
+  b.row(x0 + 51, x0 + 58, 10, '='); b.set(x0 + 55, 9, 'r');
+  b.row(x0 + 61, x0 + 62, 9, '-'); b.row(x0 + 61, x0 + 62, 8, 'o');
+  b.fill(x0 + 65, 9, x0 + 72, 13, '#'); b.col(x0 + 69, 2, 6, '#'); b.col(x0 + 69, 7, 8, 'C'); b.set(x0 + 59, 2, 'd');
+  b.row(x0 + 75, x0 + 82, 10, '='); b.set(x0 + 79, 9, 'h');
+  b.fill(x0 + 85, 9, x0 + 90, 13, '#'); b.set(x0 + 87, 5, 'L');
+  // верх
+  b.fill(x0 + 92, 7, x0 + 94, 13, '#');
+  b.plat(x0 + 96, 7, 'v', 2);
+  b.row(x0 + 100, x0 + 110, 5, '='); b.set(x0 + 105, 4, 'k'); b.row(x0 + 101, x0 + 104, 4, 'o');
+  b.row(x0 + 113, x0 + 115, 6, '-'); b.row(x0 + 118, x0 + 120, 5, '-'); b.row(x0 + 118, x0 + 120, 4, 'o');
+  b.fill(x0 + 123, 6, x0 + 130, 13, '#'); b.spikes(x0 + 126, x0 + 127, 5);
+  b.row(x0 + 133, x0 + 140, 6, '='); b.set(x0 + 137, 5, 'r');
+  b.fill(x0 + 143, 6, x0 + 156, 13, '#');
+  const leave = x0 + 152; b.pipe(leave, 4, 5); b.row(x0 + 146, x0 + 149, 5, 'o');
   return { arrive, leave, floodStop: 6 * T + 6 };
 }
 
@@ -725,28 +745,31 @@ function buildUnder(b, idx, x0, len) {
   b.sign(x0 + 8, 'Нижний путь: опасно, но быстрее', 'Нижний путь: опасно, но быстрее');
   const pool = ['rk', 'kh', 'rh', 'kg', 'hk', 'hh'][idx];
   let ei = 0; const foe = () => pool[(ei++) % pool.length];
+  let lootN = 0;
   const SEG = {
     enemies(sx) { b.row(sx + 2, sx + 5, 11, 'o'); b.set(sx + 3, 13, foe()); b.set(sx + 6, 13, foe()); return 8; },
     spikes(sx) { b.spikes(sx + 1, sx + 2); b.spikes(sx + 5, sx + 6); for (const x of [sx + 1, sx + 2, sx + 5, sx + 6]) b.set(x, 10, 'o'); return 9; },
     sewer(sx) { b.row(sx + 1, sx + 8, 14, '~'); b.plat(sx + 1, 12, 'h', 4); b.row(sx + 3, sx + 6, 10, 'o'); return 10; },
     pit(sx) { b.fill(sx + 2, 14, sx + 4, 16, ' '); b.row(sx + 2, sx + 4, 10, 'o'); return 7; },
-    clogs(sx) { b.col(sx + 3, 7, 13, 'C'); b.loot(sx + 3, 13, idx % 2 ? 'rapid' : 'triple'); b.set(sx + 5, 13, foe()); return 7; },
+    bigpit(sx) { b.fill(sx + 2, 14, sx + 7, 16, ' '); b.row(sx + 4, sx + 5, 11, '-'); b.row(sx + 4, sx + 5, 10, 'o'); return 10; },
+    clogs(sx) { b.col(sx + 3, 7, 13, 'C'); b.loot(sx + 3, 13, (idx + lootN++) % 2 ? 'rapid' : 'triple'); b.set(sx + 5, 13, foe()); return 7; },
     drips(sx) { b.set(sx + 2, 7, 'd'); b.set(sx + 6, 7, 'd'); b.spikes(sx + 4, sx + 4); b.row(sx + 1, sx + 7, 12, 'o'); return 9; },
     shelves(sx) { b.spikes(sx + 1, sx + 8); b.row(sx + 2, sx + 3, 11, '-'); b.row(sx + 6, sx + 7, 11, '-'); b.row(sx + 2, sx + 7, 9, 'o'); return 10; },
     heart(sx) { b.set(sx + 3, 10, 'L'); b.set(sx + 5, 13, foe()); return 7; },
+    climb(sx) { b.fill(sx + 2, 12, sx + 3, 13, '#'); b.fill(sx + 5, 10, sx + 6, 13, '#'); b.set(sx + 8, 13, foe()); b.row(sx + 5, sx + 6, 9, 'o'); return 10; },
+    ambush(sx) { b.set(sx + 2, 13, foe()); b.set(sx + 4, 13, foe()); b.set(sx + 6, 13, foe()); b.spikes(sx + 8, sx + 8); b.row(sx + 2, sx + 6, 10, 'o'); return 10; },
+    lowroof(sx) { b.fill(sx + 1, 7, sx + 8, 9, '#'); b.set(sx + 5, 13, 'r'); b.row(sx + 2, sx + 7, 12, 'o'); return 10; },
   };
-  const orders = [
-    ['enemies', 'spikes', 'clogs', 'pit', 'heart', 'drips', 'shelves'],
-    ['spikes', 'enemies', 'sewer', 'clogs', 'heart', 'shelves', 'pit'],
-    ['enemies', 'pit', 'shelves', 'clogs', 'heart', 'sewer', 'drips'],
-    ['drips', 'spikes', 'sewer', 'enemies', 'heart', 'clogs', 'shelves'],
-    ['shelves', 'enemies', 'pit', 'clogs', 'heart', 'drips', 'sewer'],
-    ['spikes', 'sewer', 'enemies', 'shelves', 'heart', 'clogs', 'pit'],
-  ][idx];
-  let sx = x0 + 12;
-  orders.forEach((name, i) => { if (i === 4) b.set(sx - 1, 13, 'F'); sx += SEG[name](sx); });
+  const kinds = ['enemies', 'spikes', 'sewer', 'pit', 'bigpit', 'clogs', 'drips', 'shelves', 'climb', 'ambush', 'lowroof'];
+  let sx = x0 + 12, n = 0, prev = '';
+  while (sx + 12 < xe - 10) {
+    let k;
+    if (n === 5 || n === 11) k = 'heart';
+    else { let r = 0; do { k = kinds[Math.floor(hash(idx * 101 + n * 13 + r * 7) * kinds.length)]; r++; } while ((k === prev || ((k === 'pit' || k === 'bigpit') && (prev === 'pit' || prev === 'bigpit' || prev === 'sewer'))) && r < 20); }
+    if (n === 5 || n === 11) b.set(sx - 1, 13, 'F');
+    sx += SEG[k](sx); prev = k; n++;
+  }
   const leave = sx + 2; b.pipe(leave, 12);
-  if (leave + 4 >= xe) console.warn('under too long', idx, leave, xe);
   b.row(leave - 3, leave - 1, 11, 'o');
   return { arrive, leave };
 }
@@ -1075,13 +1098,31 @@ function updatePlay() {
   // поднимающаяся жижа
   if (L.flood && L.flood.on && L.inUnder) {
     const F = L.flood;
-    if (F.delay > 0) F.delay--; else if (F.y > F.stop) F.y -= 0.2;
+    if (F.delay > 0) F.delay--; else if (F.y > F.stop) F.y -= 0.15;
     if (G.frame % 50 === 0 && F.y > F.stop) { tone(55, 45, 0.5, 'sawtooth', 0.05); noise(0.3, 0.05, 160); }
     if (P.y + P.h > F.y + 10) {
       particles(P.x + P.w / 2, F.y, 24, L.theme.liq, 4, 0.3, 5, 40); SFX.splash(); killPlayer(); return;
     }
     for (const e of L.enemies) if (!e.dead && e.y + e.h > F.y + 6) { e.gone = true; particles(e.x + e.w / 2, F.y, 8, L.theme.liq, 3, 0.3, 4, 30); }
     for (const it of G.items) if (it.y > F.y + 10) it.gone = true;
+  }
+
+  // ядовитая слизь (только в подземелье)
+  if (L.inUnder && P.inv <= 0) {
+    const lx = Math.floor(P.x / T) - 1, rx = Math.floor((P.x + P.w) / T) + 1;
+    outer: for (let tx = lx; tx <= rx; tx++) {
+      for (let ty = Math.floor(P.y / T); ty >= Math.max(0, Math.floor(P.y / T) - 4); ty--) {
+        if (!isCeilingTile(tx, ty)) continue;
+        for (const st of slimeStrands(tx, ty)) {
+          if (P.x + 3 < st.x + 4 && P.x + P.w - 3 > st.x - 1 && P.y < st.y + st.len + 3 && P.y + P.h > st.y) {
+            hurtPlayer(st.x); popText(P.x + P.w / 2, P.y - 18, 'ЯД!', '#8cff3a');
+            particles(st.x, st.y + st.len, 12, ['#8cff3a', '#5fbf2a', '#c8ff9a'], 3, 0.2, 4, 30);
+            break outer;
+          }
+        }
+        break;
+      }
+    }
   }
 
   // мусор-шипы: зубочистки, ватные палочки, кости
@@ -1320,7 +1361,7 @@ function updateWarp(P, L) {
       G.jets = []; G.bshots = []; G.waves = [];
       W.phase = 'up'; W.t = 0; W.top = d.ty * T; SFX.pipe();
       if (L.inUnder) popText(P.x + 11, P.y - 60, 'НИЖНИЙ ПУТЬ', '#ff8a5a');
-      if (L.flood) { L.flood.on = L.inUnder; L.flood.y = VH + 40; L.flood.delay = 200; }
+      if (L.flood) { L.flood.on = L.inUnder; L.flood.y = VH + 40; L.flood.delay = 240; }
     }
   } else {
     P.y -= 1.2;
@@ -1832,9 +1873,16 @@ function drawTile(c, x, y, tx, ty, th, bump) {
           }
         }
       }
-      if (th.under && !solid(tileAt(tx, ty + 1)) && ty < 13) {
-        // слизь, свисающая с потолка
-        for (let i = 0; i < 3; i++) { const hh = hash(tx * 9 + i); if (hh > 0.45) { const dl = 4 + hh * 10 + Math.sin(G.frame * 0.05 + tx + i) * 2; R(x + 4 + i * 10, y + T - 2, 3, dl, '#4f7a2a'); R(x + 4 + i * 10, y + T - 2 + dl, 3, 2, '#7fb04a'); } }
+      if (th.under && isCeilingTile(tx, ty)) {
+        // ядовитая слизь, свисающая с потолка
+        for (const st of slimeStrands(tx, ty)) {
+          const sx = st.x - tx * T + x, dl = st.len + Math.sin(G.frame * 0.05 + st.x) * 2;
+          if (st.big) {
+            ctx.fillStyle = 'rgba(140,255,60,.18)'; ctx.beginPath(); ctx.arc(sx + 1.5, y + T - 2 + dl, 7, 0, Math.PI * 2); ctx.fill();
+            R(sx - 1, y + T - 2, 5, dl, '#1a1012'); R(sx, y + T - 2, 3, dl, '#5fbf2a'); R(sx, y + T - 2, 1, dl, '#a8ff6a');
+            R(sx - 1, y + T - 2 + dl, 5, 4, '#8cff3a');
+          } else { R(sx, y + T - 2, 3, dl, '#4f7a2a'); R(sx, y + T - 2 + dl, 3, 2, '#7fb04a'); }
+        }
       }
       if (!solid(above) && above !== '~') {
         R(x, y, T, 4, th.top); R(x, y, T, 1, 'rgba(255,255,255,.6)'); R(x, y + 4, T, 1, 'rgba(0,0,0,.3)');
