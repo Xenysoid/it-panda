@@ -88,7 +88,7 @@ if (($in['action'] ?? '') === 'submit') {
     $token = (string)($in['token'] ?? '');
     $name  = cleanName($in['name'] ?? '');
     $score = (int)($in['score'] ?? 0);
-    $level = max(1, min(3, (int)($in['level'] ?? 1)));
+    $level = max(1, min(6, (int)($in['level'] ?? 1)));
     $win   = !empty($in['win']);
     if ($name === '') out(['error' => 'name'], 400);
     if ($score <= 0 || $score > MAX_SCORE) out(['error' => 'score'], 400);
